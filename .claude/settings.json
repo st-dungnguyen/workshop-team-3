@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Write(game-api/.env.example)",
+      "Write(game-ui/.env.example)"
+    ]
+  }
+}
