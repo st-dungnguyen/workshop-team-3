@@ -14,6 +14,9 @@ const PATHS = {
 export default ({ mode }) => {
   process.env = { ...process.env, ...loadEnv(mode, process.cwd()) };
   return defineConfig({
+    server: {
+      allowedHosts: ['ui.drinkendar.online'],
+    },
     root: PATHS.source,
     envDir: __dirname,
     base: PATHS.fixed,
