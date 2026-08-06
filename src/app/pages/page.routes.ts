@@ -1,17 +1,15 @@
 import React from 'react';
-
-import { PageRoute } from '@core/modules/custom-router-dom/router.interface';
-import articleRoutes from './articles/article.routes';
-import homeRoutes from './home/home.routes';
+import type { PageRoute } from '@core/modules/custom-router-dom/router.interface';
+import gameRoutes from './game/game.routes';
 import errorRoutes from './error/error.routes';
 
-const Page = React.lazy(() => import('./Page'));
+const GamePage = React.lazy(() => import('./game/containers/GamePage'));
 
 const pageRoutes: PageRoute[] = [
   {
     path: '/',
-    element: Page,
-    children: [...homeRoutes, ...articleRoutes, ...errorRoutes],
+    element: GamePage,
+    children: [...gameRoutes, ...errorRoutes],
   },
 ];
 

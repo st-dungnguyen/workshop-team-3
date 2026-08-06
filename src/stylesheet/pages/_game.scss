@@ -1,0 +1,904 @@
+@use "sass:map";
+@use "../base/variables" as vars;
+@use "../base/mixins" as mixins;
+
+// === Page Shell ===
+
+.game-page {
+  min-height: 100vh;
+  background-color: #fdf6ec;
+  display: flex;
+  flex-direction: column;
+}
+
+// === Game Shell ===
+
+.game-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 32px 16px 48px;
+  gap: 24px;
+  background: linear-gradient(160deg, #fff8e8 0%, #fdf6ec 50%, #fff0d8 100%);
+  overflow: hidden;
+
+  // Polka-dot texture
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(
+      circle,
+      rgba(255, 183, 0, 0.12) 1.5px,
+      transparent 1.5px
+    );
+    background-size: 24px 24px;
+    pointer-events: none;
+  }
+}
+
+.game-shell-header {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  animation: slide-up 0.5s ease-out;
+
+  &-title {
+    font-family: vars.$font-japan;
+    font-size: map.get(vars.$font-size, xxl);
+    font-weight: 900;
+    margin: 0 0 6px;
+    background: linear-gradient(
+      135deg,
+      map.get(vars.$color, orange-a) 0%,
+      map.get(vars.$color, orange-b) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  &-subtitle {
+    font-size: map.get(vars.$font-size, sm);
+    color: map.get(vars.$color, state-grey-b);
+    margin: 0;
+  }
+}
+
+.game-shell-stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.game-shell-star {
+  position: absolute;
+  line-height: 1;
+  animation: badge-float 3s ease-in-out infinite;
+
+  &-1 {
+    top: 8%;
+    left: 7%;
+    font-size: 22px;
+    animation-delay: 0s;
+  }
+
+  &-2 {
+    top: 14%;
+    right: 9%;
+    font-size: 16px;
+    animation-delay: 0.8s;
+  }
+
+  &-3 {
+    bottom: 18%;
+    left: 6%;
+    font-size: 18px;
+    animation-delay: 1.5s;
+  }
+
+  &-4 {
+    bottom: 14%;
+    right: 7%;
+    font-size: 20px;
+    animation-delay: 2.2s;
+  }
+}
+
+// === Inline Error States ===
+
+.game-server-error {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 320px;
+  padding: 16px;
+  background: #fff4e6;
+  border-radius: 12px;
+  text-align: center;
+  border: 1.5px solid rgba(248, 140, 26, 0.3);
+
+  &-title {
+    font-family: vars.$font-japan;
+    font-size: map.get(vars.$font-size, normal);
+    font-weight: 700;
+    color: map.get(vars.$color, slate-grey-a);
+    margin: 0 0 8px;
+  }
+
+  &-body {
+    font-size: map.get(vars.$font-size, sm);
+    color: map.get(vars.$color, state-grey-b);
+    margin: 0 0 16px;
+  }
+}
+
+.game-already-played {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 48px 24px;
+  background: linear-gradient(160deg, #f0f4ff 0%, #e8eef8 100%);
+  text-align: center;
+  gap: 16px;
+
+  &-illustration {
+    font-size: 72px;
+    line-height: 1;
+    animation: badge-float 4s ease-in-out infinite;
+  }
+
+  &-title {
+    font-family: vars.$font-japan;
+    font-size: map.get(vars.$font-size, xl);
+    font-weight: 700;
+    color: #3d4470;
+    margin: 0;
+  }
+
+  &-bubble {
+    position: relative;
+    background: map.get(vars.$color, white);
+    border-radius: 20px;
+    padding: 14px 20px;
+    max-width: 260px;
+    @include mixins.box-shadow(0 4px 16px rgba(0, 0, 0, 0.08));
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 10px solid transparent;
+      border-bottom-color: map.get(vars.$color, white);
+      border-top: 0;
+    }
+  }
+
+  &-body {
+    font-size: map.get(vars.$font-size, normal);
+    color: map.get(vars.$color, state-grey-b);
+    margin: 0;
+    line-height: 1.6;
+  }
+}
+
+// === Shared CTA Button Modifier ===
+
+.game-result-cta {
+  width: 100%;
+  min-height: 52px;
+  border-radius: 26px;
+  font-size: map.get(vars.$font-size, normal);
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    opacity 0.2s ease;
+
+  &:not(:disabled):active {
+    @include mixins.transform(scale(0.97));
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.btn-primary {
+  background: linear-gradient(
+    135deg,
+    map.get(vars.$color, orange-a) 0%,
+    map.get(vars.$color, orange-b) 100%
+  );
+  color: map.get(vars.$color, white);
+  border: none;
+  padding: 14px 24px;
+  border-radius: 26px;
+  font-size: map.get(vars.$font-size, normal);
+  font-weight: 700;
+  cursor: pointer;
+  @include mixins.box-shadow(0 4px 16px rgba(255, 91, 0, 0.35));
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+
+  &:hover {
+    @include mixins.box-shadow(0 6px 20px rgba(255, 91, 0, 0.45));
+  }
+
+  &:active {
+    @include mixins.transform(scale(0.97));
+  }
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: map.get(vars.$color, orange-a);
+  border: 2px solid map.get(vars.$color, orange-a);
+  padding: 12px 24px;
+  border-radius: 26px;
+  font-size: map.get(vars.$font-size, normal);
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+
+  &:hover {
+    background-color: map.get(vars.$color, orange-a);
+    color: map.get(vars.$color, white);
+  }
+}
+
+// === Animations ===
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-20px) rotate(var(--c-rotate, 0deg)) scaleX(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translateY(50vh) rotate(calc(var(--c-rotate, 0deg) + 360deg))
+      scaleX(-1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(110vh) rotate(calc(var(--c-rotate, 0deg) + 720deg))
+      scaleX(1);
+    opacity: 0;
+  }
+}
+
+@keyframes rays-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes badge-pop {
+  0% {
+    transform: scale(0) rotate(-20deg);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.2) rotate(8deg);
+  }
+
+  80% {
+    transform: scale(0.9) rotate(-4deg);
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes badge-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shimmer-slide {
+  0% {
+    background-position: -300% center;
+  }
+
+  100% {
+    background-position: 300% center;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes lose-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-3deg);
+  }
+
+  50% {
+    transform: translateY(-12px) rotate(3deg);
+  }
+}
+
+@keyframes card-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 6px 20px rgba(248, 140, 26, 0.3),
+      0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  50% {
+    box-shadow:
+      0 10px 32px rgba(248, 140, 26, 0.5),
+      0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+}
+
+// === Confetti ===
+
+.game-confetti {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+
+  &-piece {
+    position: absolute;
+    top: -16px;
+    left: var(--c-x, 50%);
+    width: var(--c-width, 9px);
+    height: var(--c-height, 12px);
+    background-color: var(--c-color, #ffd600);
+    border-radius: var(--c-radius, 2px);
+    animation: confetti-fall var(--c-duration, 3s) var(--c-delay, 0s) ease-in
+      infinite;
+  }
+}
+
+// === Coupon Card ===
+
+.game-result-coupon-card {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  padding: 20px 28px;
+  background: map.get(vars.$color, white);
+  border-radius: 16px;
+  border: 2px dashed map.get(vars.$color, orange-a);
+  text-align: center;
+  overflow: hidden;
+  box-shadow:
+    0 8px 32px rgba(248, 140, 26, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.06);
+  animation: slide-up 0.5s 0.4s both ease-out;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.6) 50%,
+      transparent 70%
+    );
+    background-size: 300% 100%;
+    animation: shimmer-slide 2.5s 1s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  &-hole {
+    position: absolute;
+    top: 50%;
+    width: 20px;
+    height: 20px;
+    background: #fdf6ec;
+    border-radius: 50%;
+    transform: translateY(-50%);
+
+    &-left {
+      left: -10px;
+    }
+
+    &-right {
+      right: -10px;
+    }
+  }
+
+  &-title {
+    font-size: map.get(vars.$font-size, sm);
+    color: map.get(vars.$color, state-grey-b);
+    margin: 0 0 10px;
+    line-height: 1.5;
+  }
+
+  &-discount {
+    font-family: vars.$font-japan;
+    font-size: map.get(vars.$font-size, xxxl);
+    font-weight: 900;
+    background: linear-gradient(
+      135deg,
+      map.get(vars.$color, orange-a) 0%,
+      map.get(vars.$color, orange-b) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 10px;
+    line-height: 1.1;
+  }
+
+  &-expiry {
+    font-size: map.get(vars.$font-size, xs);
+    color: map.get(vars.$color, grey-b);
+    margin: 0;
+    padding: 6px 12px;
+    background: #fff8f0;
+    border-radius: 20px;
+    display: inline-block;
+  }
+}
+
+// === Game Result — Win ===
+
+.game-result-win {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 24px 32px;
+  gap: 14px;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 50% 0%, #fff8e8 0%, #fdf6ec 60%);
+  overflow: hidden;
+
+  &-celebration {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: badge-float 3s ease-in-out 1s infinite;
+  }
+
+  &-rays {
+    position: absolute;
+    inset: -16px;
+    background: repeating-conic-gradient(
+      rgba(255, 183, 0, 0.22) 0deg 6deg,
+      transparent 6deg 18deg
+    );
+    border-radius: 50%;
+    animation: rays-rotate 14s linear infinite;
+  }
+
+  &-badge {
+    position: relative;
+    font-size: 72px;
+    line-height: 1;
+    display: block;
+    filter: drop-shadow(0 4px 12px rgba(255, 140, 0, 0.4));
+    animation: badge-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  &-title {
+    font-family: vars.$font-japan;
+    font-size: map.get(vars.$font-size, xxl);
+    font-weight: 900;
+    color: map.get(vars.$color, slate-grey-a);
+    margin: 0;
+    text-align: center;
+    animation: slide-up 0.4s 0.2s both ease-out;
+
+    &::after {
+      content: "";
+      display: block;
+      width: 40px;
+      height: 3px;
+      background: linear-gradient(
+        90deg,
+        map.get(vars.$color, orange-a),
+        map.get(vars.$color, orange-b)
+      );
+      border-radius: 2px;
+      margin: 6px auto 0;
+    }
+  }
+
+  &-body {
+    font-size: map.get(vars.$font-size, normal);
+    color: map.get(vars.$color, state-grey-b);
+    margin: 0;
+    text-align: center;
+    animation: slide-up 0.4s 0.3s both ease-out;
+  }
+
+  &-error {
+    font-size: map.get(vars.$font-size, sm);
+    color: map.get(vars.$color, danger-msg);
+    text-align: center;
+    margin: 0;
+    padding: 8px 16px;
+    background: rgba(231, 76, 60, 0.08);
+    border-radius: 8px;
+  }
+}
+
+.game-result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 320px;
+  margin-top: 4px;
+  animation: slide-up 0.4s 0.6s both ease-out;
+}
+
+// === Game Result — Lose ===
+
+.game-result-lose {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px 36px;
+  gap: 16px;
+  min-height: 100vh;
+  background: linear-gradient(160deg, #f0f4ff 0%, #e8eef8 100%);
+
+  &-illustration {
+    width: 130px;
+    height: 130px;
+    background: linear-gradient(135deg, #c5cae9 0%, #9fa8da 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    @include mixins.box-shadow(0 8px 24px rgba(121, 134, 203, 0.3));
+    animation: lose-float 4s ease-in-out infinite;
+  }
+
+  &-emoji {
+    font-size: 64px;
+    line-height: 1;
+  }
+
+  &-title {
+    font-family: vars.$font-japan;
+    font-size: map.get(vars.$font-size, xxl);
+    font-weight: 900;
+    color: #3d4470;
+    margin: 0;
+    text-align: center;
+  }
+
+  &-bubble {
+    position: relative;
+    background: map.get(vars.$color, white);
+    border-radius: 20px;
+    padding: 14px 20px;
+    max-width: 260px;
+    @include mixins.box-shadow(0 4px 16px rgba(0, 0, 0, 0.08));
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 10px solid transparent;
+      border-bottom-color: map.get(vars.$color, white);
+      border-top: 0;
+    }
+  }
+
+  &-body {
+    font-size: map.get(vars.$font-size, normal);
+    color: map.get(vars.$color, state-grey-b);
+    margin: 0;
+    text-align: center;
+    line-height: 1.6;
+  }
+}
+
+.game-result-cta-close {
+  margin-top: 8px;
+  background: linear-gradient(135deg, #7986cb 0%, #5c6bc0 100%);
+  border: none;
+
+  &:hover {
+    background: linear-gradient(135deg, #5c6bc0 0%, #3f51b5 100%);
+  }
+}
+
+// === Scratch Card Variant ===
+
+.scratch-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+
+  &-frame {
+    position: relative;
+    padding: 10px;
+    background: linear-gradient(
+      135deg,
+      map.get(vars.$color, orange-a) 0%,
+      map.get(vars.$color, orange-b) 100%
+    );
+    border-radius: 18px;
+    box-shadow:
+      0 10px 36px rgba(248, 140, 26, 0.4),
+      0 3px 10px rgba(0, 0, 0, 0.12);
+    animation: card-pulse 2.5s ease-in-out infinite;
+  }
+
+  &-corner {
+    position: absolute;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    line-height: 1;
+    z-index: 1;
+
+    &-tl {
+      top: -6px;
+      left: -6px;
+    }
+
+    &-tr {
+      top: -6px;
+      right: -6px;
+    }
+
+    &-bl {
+      bottom: -6px;
+      left: -6px;
+    }
+
+    &-br {
+      bottom: -6px;
+      right: -6px;
+    }
+  }
+
+  &-surface {
+    position: relative;
+    width: 280px;
+    height: 180px;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  &-result {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: map.get(vars.$color, white);
+    font-family: vars.$font-japan;
+    gap: 8px;
+
+    &-win {
+      background: linear-gradient(160deg, #fff9ec 0%, #fff3d4 100%);
+    }
+
+    &-lose {
+      background: #f7f7f7;
+    }
+
+    &-label {
+      font-size: map.get(vars.$font-size, sm);
+      font-weight: 700;
+      color: map.get(vars.$color, orange-a);
+      letter-spacing: 0.05em;
+    }
+
+    &-discount {
+      font-size: map.get(vars.$font-size, xxxl);
+      font-weight: 900;
+      color: map.get(vars.$color, orange-b);
+      line-height: 1;
+    }
+
+    &-lose-text {
+      font-size: map.get(vars.$font-size, xxl);
+      font-weight: 700;
+      color: map.get(vars.$color, grey-b);
+    }
+  }
+
+  canvas {
+    position: absolute;
+    inset: 0;
+    cursor: crosshair;
+    touch-action: none;
+  }
+
+  &-instruction {
+    font-size: map.get(vars.$font-size, sm);
+    color: map.get(vars.$color, state-grey-b);
+    text-align: center;
+    margin: 0;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 6px 16px;
+    border-radius: 20px;
+  }
+}
+
+// === Flip Card Variant ===
+
+.flip-card-board {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+.flip-card-instruction {
+  font-size: map.get(vars.$font-size, normal);
+  font-weight: 700;
+  color: map.get(vars.$color, slate-grey-a);
+  text-align: center;
+  margin: 0;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 8px 20px;
+  border-radius: 20px;
+}
+
+.flip-card-row {
+  display: flex;
+  gap: 16px;
+}
+
+.flip-card-item {
+  width: 90px;
+  height: 130px;
+  perspective: 600px;
+  cursor: pointer;
+
+  &-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    @include mixins.transition(transform 0.6s ease);
+  }
+
+  &-flipping .flip-card-item-inner {
+    @include mixins.transform(rotateY(180deg));
+  }
+
+  &-dimmed {
+    opacity: 0.4;
+    pointer-events: none;
+    @include mixins.transition(opacity 0.3s ease);
+  }
+
+  &-front,
+  &-back {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: 12px;
+  }
+
+  &-front {
+    background: linear-gradient(145deg, #e8a045 0%, #c8720a 50%, #a05510 100%);
+    border: 2.5px solid rgba(255, 220, 120, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 6px 20px rgba(180, 100, 10, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: box-shadow 0.2s ease;
+
+    // Subtle inner pattern
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 6px;
+      border: 1.5px solid rgba(255, 220, 100, 0.35);
+      border-radius: 8px;
+    }
+
+    &:hover {
+      box-shadow:
+        0 10px 28px rgba(180, 100, 10, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  &-front-question {
+    font-family: vars.$font-japan;
+    font-size: 44px;
+    font-weight: 900;
+    color: rgba(255, 240, 160, 0.85);
+    line-height: 1;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 1;
+  }
+
+  &-back {
+    background: map.get(vars.$color, white);
+    @include mixins.transform(rotateY(180deg));
+    @include mixins.box-shadow(0 4px 12px rgba(0, 0, 0, 0.12));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 4px;
+    gap: 4px;
+
+    &-win {
+      background: linear-gradient(160deg, #fff9ec 0%, #fff3d4 100%);
+    }
+
+    &-lose {
+      background: #f7f7f7;
+    }
+
+    &-discount {
+      font-family: vars.$font-japan;
+      font-size: map.get(vars.$font-size, sm);
+      font-weight: 900;
+      color: map.get(vars.$color, orange-b);
+      text-align: center;
+      line-height: 1.2;
+      word-break: break-all;
+    }
+
+    &-lose {
+      font-family: vars.$font-japan;
+      font-size: map.get(vars.$font-size, normal);
+      font-weight: 700;
+      color: map.get(vars.$color, grey-b);
+    }
+  }
+}

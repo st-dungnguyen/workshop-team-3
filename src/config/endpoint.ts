@@ -1,6 +1,6 @@
 const RESOURCES = {
   auth: 'auth',
-  article: 'posts',
+  game: 'game',
 };
 
 export const ENDPOINT = {
@@ -9,7 +9,7 @@ export const ENDPOINT = {
     login: `${RESOURCES.auth}/login`,
     validate: `${RESOURCES.auth}/validate`,
   },
-  article: {
-    articleList: `${RESOURCES.article}`,
+  game: {
+    play: `${RESOURCES.game}/play`,
   },
 };

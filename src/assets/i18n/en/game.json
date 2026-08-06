@@ -1,0 +1,36 @@
+{
+  "title": "Lucky Chance!",
+  "subtitle": "Try your luck ✨",
+  "scratch": {
+    "instruction": "Scratch the card to reveal your result!"
+  },
+  "flip": {
+    "instruction": "Pick a card!"
+  },
+  "serverError": {
+    "title": "Please wait a moment",
+    "body": "The server is busy. Please try again.",
+    "retry": "Try again"
+  },
+  "alreadyPlayed": {
+    "title": "You've already played today",
+    "body": "Come back tomorrow for another chance!"
+  },
+  "result": {
+    "win": {
+      "title": "Congratulations!",
+      "body": "You've won a coupon!",
+      "scratchLabel": "Winner!",
+      "expiry": "Valid until {{date}}"
+    },
+    "lose": {
+      "title": "Better luck next time!",
+      "body": "Come back tomorrow for another chance!",
+      "scratchLabel": "No luck"
+    },
+    "claimCoupon": "Claim Coupon",
+    "useNow": "Use Now",
+    "close": "Return to App",
+    "claimError": "Failed to claim your coupon. Please try again."
+  }
+}

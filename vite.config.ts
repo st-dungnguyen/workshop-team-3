@@ -15,6 +15,7 @@ export default ({ mode }) => {
   process.env = { ...process.env, ...loadEnv(mode, process.cwd()) };
   return defineConfig({
     root: PATHS.source,
+    envDir: __dirname,
     base: PATHS.fixed,
     publicDir: 'assets',
     plugins: [

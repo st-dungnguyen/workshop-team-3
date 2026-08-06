@@ -1,0 +1,36 @@
+{
+  "title": "ラッキーチャンス！",
+  "subtitle": "あなたの運を試そう✨",
+  "scratch": {
+    "instruction": "カードをこすって結果を確認しよう！"
+  },
+  "flip": {
+    "instruction": "カードを1枚えらんでね！"
+  },
+  "serverError": {
+    "title": "少しだけお待ちください",
+    "body": "サーバーが混み合っています。もう一度お試しください。",
+    "retry": "もう一度試す"
+  },
+  "alreadyPlayed": {
+    "title": "本日はすでにプレイ済みです",
+    "body": "また明日チャレンジしてね！"
+  },
+  "result": {
+    "win": {
+      "title": "おめでとうございます！",
+      "body": "クーポンをゲットしました！",
+      "scratchLabel": "当選！",
+      "expiry": "{{date}}まで有効"
+    },
+    "lose": {
+      "title": "残念！",
+      "body": "また明日チャレンジしてね！",
+      "scratchLabel": "ハズレ"
+    },
+    "claimCoupon": "クーポンを受け取る",
+    "useNow": "今すぐ使う",
+    "close": "アプリに戻る",
+    "claimError": "クーポンの取得に失敗しました。もう一度お試しください。"
+  }
+}
