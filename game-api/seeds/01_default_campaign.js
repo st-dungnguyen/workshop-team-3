@@ -43,7 +43,6 @@ exports.seed = async function (knex) {
       start_date: startDate,
       end_date: endDate,
       weight: 1,
-      points: 200,
     },
     {
       campaign_id: campaignId,
@@ -53,7 +52,6 @@ exports.seed = async function (knex) {
       start_date: startDate,
       end_date: endDate,
       weight: 3,
-      points: 100,
     },
     {
       campaign_id: campaignId,
@@ -63,7 +61,6 @@ exports.seed = async function (knex) {
       start_date: startDate,
       end_date: endDate,
       weight: 8,
-      points: 70,
     },
     {
       campaign_id: campaignId,
@@ -73,7 +70,6 @@ exports.seed = async function (knex) {
       start_date: startDate,
       end_date: endDate,
       weight: 12,
-      points: 50,
     },
     {
       campaign_id: campaignId,
@@ -83,7 +79,6 @@ exports.seed = async function (knex) {
       start_date: startDate,
       end_date: endDate,
       weight: 15,
-      points: 40,
     },
     {
       campaign_id: campaignId,
@@ -93,7 +88,6 @@ exports.seed = async function (knex) {
       start_date: startDate,
       end_date: endDate,
       weight: 18,
-      points: 30,
     },
     {
       campaign_id: campaignId,
@@ -103,7 +97,6 @@ exports.seed = async function (knex) {
       start_date: startDate,
       end_date: endDate,
       weight: 20,
-      points: 20,
     },
     {
       campaign_id: campaignId,
@@ -113,7 +106,6 @@ exports.seed = async function (knex) {
       start_date: startDate,
       end_date: endDate,
       weight: 1,
-      points: 300,
     },
   ])
 }
