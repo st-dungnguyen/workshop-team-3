@@ -13,8 +13,10 @@
     "retry": "もう一度試す"
   },
   "alreadyPlayed": {
-    "title": "本日はすでにプレイ済みです",
+    "title": "本日の挑戦はお済みです",
+    "subtitle": "明日またチャレンジしよう！",
     "comeBackSoon": "また明日チャレンジしてね！",
+    "nextPlayLabel": "次回プレイ可能時間",
     "nextPlayAt": "{{date}} からまた遊べます！",
     "returnToApp": "アプリに戻る"
   },

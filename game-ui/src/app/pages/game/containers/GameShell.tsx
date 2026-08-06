@@ -23,28 +23,42 @@ const formatNextPlayAt = (iso: string, lng: string): string => {
 const PlayLimitScreen = ({ nextPlayAt }: { nextPlayAt: string | null }) => {
   const { t, i18n } = useTranslation('game');
   return (
-    <div className="game-play-limit">
-      <div className="game-play-limit-illustration" aria-hidden="true">
-        📅
+    <div className="game-already-played">
+      <div className="game-already-played-illustration" aria-hidden="true">
+        🌙
       </div>
-      <h2 className="game-play-limit-title">{t('alreadyPlayed.title')}</h2>
-      <div className="game-play-limit-bubble">
-        <p className="game-play-limit-body">
-          {nextPlayAt
-            ? t('alreadyPlayed.nextPlayAt', {
-                date: formatNextPlayAt(nextPlayAt, i18n.language),
-              })
-            : t('alreadyPlayed.comeBackSoon')}
+      <h2 className="game-already-played-title">{t('alreadyPlayed.title')}</h2>
+      <div className="game-already-played-bubble">
+        <p className="game-already-played-body">
+          {t('alreadyPlayed.subtitle')}
         </p>
       </div>
-      <button
-        className="btn-primary game-play-limit-cta"
-        onClick={() => {
-          window.location.href = `${window.location.origin}/close`;
-        }}
-      >
-        {t('alreadyPlayed.returnToApp')}
-      </button>
+
+      {nextPlayAt && (
+        <div className="game-already-played-cooldown">
+          <p className="game-already-played-cooldown-label">
+            {t('alreadyPlayed.nextPlayLabel')}
+          </p>
+          <p className="game-already-played-cooldown-time">
+            {formatNextPlayAt(nextPlayAt, i18n.language)}
+          </p>
+        </div>
+      )}
+
+      <div className="game-already-played-deco" aria-hidden="true">
+        🌸
+      </div>
+
+      <div className="game-already-played-actions">
+        <button
+          className="btn-primary game-result-cta"
+          onClick={() => {
+            window.location.href = `${window.location.origin}/close`;
+          }}
+        >
+          {t('alreadyPlayed.returnToApp')}
+        </button>
+      </div>
     </div>
   );
 };

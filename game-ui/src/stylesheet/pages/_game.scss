@@ -167,7 +167,7 @@
     background: map.get(vars.$color, white);
     border-radius: 20px;
     padding: 14px 20px;
-    max-width: 260px;
+    max-width: 280px;
     @include mixins.box-shadow(0 4px 16px rgba(0, 0, 0, 0.08));
 
     &::before {
@@ -187,6 +187,49 @@
     color: map.get(vars.$color, state-grey-b);
     margin: 0;
     line-height: 1.6;
+  }
+
+  &-cooldown {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    padding: 16px 24px;
+    border: 1px solid rgba(61, 68, 112, 0.12);
+    text-align: center;
+    width: 100%;
+    max-width: 280px;
+    animation: slide-up 0.4s 0.3s both ease-out;
+
+    &-label {
+      font-size: map.get(vars.$font-size, xs);
+      color: map.get(vars.$color, state-grey-b);
+      margin: 0 0 4px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    &-time {
+      font-size: map.get(vars.$font-size, xl);
+      font-weight: 700;
+      color: #3d4470;
+      margin: 0;
+    }
+  }
+
+  &-deco {
+    font-size: 40px;
+    line-height: 1;
+    opacity: 0.7;
+    animation: lose-float 5s ease-in-out infinite;
+  }
+
+  &-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 320px;
+    margin-top: 4px;
+    animation: slide-up 0.4s 0.5s both ease-out;
   }
 }
 

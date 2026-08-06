@@ -14,7 +14,9 @@
   },
   "alreadyPlayed": {
     "title": "You've already played today",
+    "subtitle": "Come back tomorrow for another chance!",
     "comeBackSoon": "Come back tomorrow for another chance!",
+    "nextPlayLabel": "Next play available",
     "nextPlayAt": "You can play again from {{date}}!",
     "returnToApp": "Return to App"
   },
