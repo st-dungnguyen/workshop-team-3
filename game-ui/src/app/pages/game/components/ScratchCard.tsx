@@ -4,7 +4,7 @@ import type { GameVariantProps } from '@app/shared/models/game';
 
 const CARD_W = 280;
 const CARD_H = 180;
-const AUTO_COMPLETE_THRESHOLD = 0.6;
+const AUTO_COMPLETE_THRESHOLD = 0.3;
 
 const ScratchCard = ({
   outcome,
