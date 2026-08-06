@@ -1,4 +1,4 @@
-import { type CSSProperties, useState } from 'react';
+import { type CSSProperties, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CouponInfo, GameOutcome } from '@app/shared/models/game';
 
@@ -67,34 +67,27 @@ interface WinResultProps {
   points: number | null;
 }
 
+const AUTO_CLAIM_DELAY_MS = 3000;
+
 const WinResult = ({ coupon, points }: WinResultProps) => {
   const { t } = useTranslation('game');
-  const [ctaState, setCtaState] = useState<'idle' | 'loading' | 'error'>(
-    'idle',
-  );
+  const hasAutoClaimedRef = useRef(false);
 
   const navigate = (url: string) => {
     window.location.href = url;
   };
 
-  const handleCta = async (intent: 'claim' | 'useNow') => {
-    if (ctaState === 'loading') return;
-    setCtaState('loading');
-    try {
-      if (!coupon || !coupon.id) {
-        setCtaState('error');
-        return;
-      }
+  useEffect(() => {
+    if (!coupon?.id || hasAutoClaimedRef.current) return;
+    hasAutoClaimedRef.current = true;
+
+    const timer = setTimeout(() => {
       const encodedId = encodeURIComponent(coupon.id);
-      if (intent === 'useNow') {
-        navigate(`${COUPON_BASE_URL}/app/takeout?coupon_id=${encodedId}`);
-      } else {
-        navigate(`${COUPON_BASE_URL}/app/coupon/segment?id=${encodedId}`);
-      }
-    } catch {
-      setCtaState('error');
-    }
-  };
+      navigate(`${COUPON_BASE_URL}/app/coupon/segment?id=${encodedId}`);
+    }, AUTO_CLAIM_DELAY_MS);
+
+    return () => clearTimeout(timer);
+  }, [coupon]);
 
   return (
     <div className="game-result-win">
@@ -124,26 +117,9 @@ const WinResult = ({ coupon, points }: WinResultProps) => {
 
       {points !== null && <PointsBadge points={points} />}
 
-      {ctaState === 'error' && (
-        <p className="game-result-win-error">{t('result.claimError')}</p>
+      {coupon && (
+        <p className="game-result-win-redirect">{t('result.autoClaimRedirect')}</p>
       )}
-
-      <div className="game-result-actions">
-        <button
-          className="btn-primary game-result-cta"
-          disabled={ctaState === 'loading'}
-          onClick={() => handleCta('useNow')}
-        >
-          {ctaState === 'loading' ? '…' : t('result.useNow')}
-        </button>
-        <button
-          className="btn-secondary game-result-cta"
-          disabled={ctaState === 'loading'}
-          onClick={() => handleCta('claim')}
-        >
-          {t('result.claimCoupon')}
-        </button>
-      </div>
     </div>
   );
 };

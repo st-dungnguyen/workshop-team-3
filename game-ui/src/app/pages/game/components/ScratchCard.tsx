@@ -22,8 +22,31 @@ const ScratchCard = ({
   const onPlayInitiatedRef = useRef(onPlayInitiated);
   const onAnimationCompleteRef = useRef(onAnimationComplete);
 
+  const checkAndComplete = () => {
+    if (isDoneRef.current) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const imageData = ctx.getImageData(0, 0, CARD_W, CARD_H);
+    let transparent = 0;
+    for (let i = 3; i < imageData.data.length; i += 4) {
+      if (imageData.data[i] === 0) transparent++;
+    }
+    const ratio = transparent / (CARD_W * CARD_H);
+    if (ratio >= AUTO_COMPLETE_THRESHOLD) {
+      isDoneRef.current = true;
+      ctx.clearRect(0, 0, CARD_W, CARD_H);
+      onAnimationCompleteRef.current();
+    }
+  };
+
   useEffect(() => {
     sessionStateRef.current = sessionState;
+    if (sessionState === 'revealing') {
+      checkAndComplete();
+    }
   }, [sessionState]);
   useEffect(() => {
     onPlayInitiatedRef.current = onPlayInitiated;
@@ -92,17 +115,7 @@ const ScratchCard = ({
     ctx.globalCompositeOperation = 'source-over';
 
     if (state === 'revealing') {
-      const imageData = ctx.getImageData(0, 0, CARD_W, CARD_H);
-      let transparent = 0;
-      for (let i = 3; i < imageData.data.length; i += 4) {
-        if (imageData.data[i] === 0) transparent++;
-      }
-      const ratio = transparent / (CARD_W * CARD_H);
-      if (ratio >= AUTO_COMPLETE_THRESHOLD) {
-        isDoneRef.current = true;
-        ctx.clearRect(0, 0, CARD_W, CARD_H);
-        onAnimationCompleteRef.current();
-      }
+      checkAndComplete();
     }
   };
 

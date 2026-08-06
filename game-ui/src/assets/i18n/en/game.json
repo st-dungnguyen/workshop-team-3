@@ -37,10 +37,8 @@
       "body": "Come back tomorrow for another chance!",
       "scratchLabel": "No luck"
     },
-    "claimCoupon": "Claim Coupon",
-    "useNow": "Use Now",
+    "autoClaimRedirect": "Redirecting to your coupon...",
     "close": "Return to App",
-    "claimError": "Failed to claim your coupon. Please try again.",
     "pointsAwarded_one": "{{count}} point earned!",
     "pointsAwarded_other": "{{count}} points earned!"
   }
