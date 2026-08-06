@@ -1,0 +1,1767 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mini Game WebView — Clickable Prototype</title>
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-primary: #C41E3A;
+      --color-primary-dark: #9B1830;
+      --color-secondary: #D4A574;
+      --color-accent: #E8B86D;
+      --color-gold: #C5963A;
+      --color-bg: #FFF8F0;
+      --color-bg-warm: #FEF3E8;
+      --color-bg-card: #FFFFFF;
+      --color-text: #3D2B1F;
+      --color-text-light: #7A6455;
+      --color-text-muted: #A08B7A;
+      --color-success: #4A9B6E;
+      --color-error: #C41E3A;
+      --color-border: #E8D5C4;
+      --color-overlay: rgba(61, 43, 31, 0.6);
+      --radius: 12px;
+      --radius-lg: 20px;
+      --shadow: 0 4px 20px rgba(61, 43, 31, 0.1);
+      --shadow-lg: 0 8px 40px rgba(61, 43, 31, 0.15);
+      --font-jp: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif;
+    }
+
+    body {
+      font-family: var(--font-jp);
+      background: #E8E0D8;
+      color: var(--color-text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ===== LAYOUT SHELL ===== */
+    .app-shell {
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: var(--color-bg);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 60px rgba(0,0,0,0.15);
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      color: white;
+      padding: 16px 20px;
+      text-align: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .header-title { font-size: 18px; font-weight: 700; letter-spacing: 1px; }
+    .header-subtitle { font-size: 11px; opacity: 0.8; margin-top: 2px; letter-spacing: 0.5px; }
+
+    .header-basic {
+      background: var(--color-bg-warm);
+      color: var(--color-text);
+      padding: 14px 20px;
+      text-align: center;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .footer {
+      background: var(--color-bg-warm);
+      border-top: 1px solid var(--color-border);
+      padding: 12px 20px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--color-text-muted);
+    }
+
+    /* ===== SCREEN ===== */
+    .screen { display: none; flex-direction: column; min-height: 100vh; }
+    .screen.active { display: flex; }
+
+    .screen-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      text-align: center;
+    }
+
+    /* ===== DECO ===== */
+    .deco-pattern {
+      position: absolute; top: 0; left: 0; right: 0; height: 200px;
+      background: linear-gradient(180deg, rgba(196, 30, 58, 0.05) 0%, transparent 100%);
+      pointer-events: none;
+    }
+
+    /* ===== ICONS ===== */
+    .icon {
+      width: 80px; height: 80px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 24px; font-size: 36px;
+    }
+    .icon-error { background: #FEE; border: 3px solid var(--color-error); }
+    .icon-success { background: #E8F5E9; border: 3px solid var(--color-success); }
+
+    /* ===== SPINNER ===== */
+    .spinner {
+      width: 48px; height: 48px;
+      border: 4px solid var(--color-border);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 24px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== TYPOGRAPHY ===== */
+    .title { font-size: 22px; font-weight: 700; margin-bottom: 12px; line-height: 1.4; }
+    .subtitle { font-size: 15px; color: var(--color-text-light); margin-bottom: 8px; line-height: 1.6; }
+    .description { font-size: 13px; color: var(--color-text-muted); line-height: 1.6; margin-bottom: 24px; }
+    .label-small { font-size: 11px; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 48px; padding: 12px 32px; border-radius: var(--radius);
+      font-size: 16px; font-weight: 600; border: none; cursor: pointer;
+      transition: all 0.2s ease; width: 100%; max-width: 320px;
+      letter-spacing: 0.5px; font-family: var(--font-jp);
+    }
+    .btn + .btn { margin-top: 12px; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      color: white; box-shadow: 0 4px 15px rgba(196, 30, 58, 0.3);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(196, 30, 58, 0.4); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-secondary { background: white; color: var(--color-primary); border: 2px solid var(--color-primary); }
+    .btn-secondary:hover { background: #FFF5F7; }
+    .btn-gold {
+      background: linear-gradient(135deg, var(--color-accent), var(--color-gold));
+      color: white; box-shadow: 0 4px 15px rgba(197, 150, 58, 0.3);
+    }
+    .btn-gold:hover { transform: translateY(-1px); }
+    .btn-ghost { background: transparent; color: var(--color-text-light); border: 1px solid var(--color-border); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+    .btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 12px; margin-top: 24px; }
+    .btn-group .btn + .btn { margin-top: 0; }
+
+    /* ===== CARD ===== */
+    .card {
+      background: var(--color-bg-card); border-radius: var(--radius-lg);
+      padding: 32px 24px; box-shadow: var(--shadow); width: 100%; max-width: 360px;
+    }
+
+    /* ===== SEASON SELECTOR (config-level) ===== */
+    .season-selector {
+      display: flex; gap: 0; margin-bottom: 20px;
+      background: var(--color-bg-warm); border-radius: 28px;
+      padding: 4px; border: 1px solid var(--color-border);
+    }
+    .season-btn {
+      flex: 1; padding: 10px 16px; border-radius: 24px;
+      border: none; background: transparent;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      font-family: var(--font-jp); transition: all 0.3s;
+      color: var(--color-text-muted); display: flex; align-items: center;
+      justify-content: center; gap: 6px;
+    }
+    .season-btn.active {
+      background: var(--color-primary); color: white;
+      box-shadow: 0 2px 8px rgba(196, 30, 58, 0.3);
+    }
+    .season-btn .season-icon { font-size: 16px; }
+
+    /* ============================================ */
+    /* ===== SCRATCH CARD GAME STYLES ===== */
+    /* ============================================ */
+
+    /* Daily Streak Bar */
+    .streak-bar {
+      width: 100%; max-width: 340px;
+      background: white; border-radius: var(--radius);
+      padding: 16px; margin-bottom: 16px;
+      box-shadow: var(--shadow); border: 1px solid var(--color-border);
+    }
+    .streak-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px;
+    }
+    .streak-title { font-size: 14px; font-weight: 700; color: var(--color-text); }
+    .streak-count {
+      font-size: 13px; font-weight: 600; color: var(--color-primary);
+      background: #FFF0F3; padding: 2px 10px; border-radius: 12px;
+    }
+    .streak-days {
+      display: flex; justify-content: space-between; gap: 4px;
+    }
+    .streak-day {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .streak-day-circle {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; border: 2px solid var(--color-border);
+      background: white; color: var(--color-text-muted);
+      transition: all 0.3s;
+    }
+    .streak-day-circle.done {
+      background: var(--color-success); border-color: var(--color-success);
+      color: white; font-size: 12px;
+    }
+    .streak-day-circle.today {
+      border-color: var(--color-primary); color: var(--color-primary);
+      background: #FFF0F3; animation: pulseRing 2s ease-in-out infinite;
+    }
+    .streak-day-circle.bonus {
+      border-color: var(--color-gold); background: linear-gradient(135deg, #FFF8E1, #FFE082);
+      color: var(--color-gold); font-size: 16px;
+    }
+    .streak-day-circle.bonus.done {
+      background: linear-gradient(135deg, var(--color-gold), #E8B86D);
+      border-color: var(--color-gold); color: white;
+    }
+    .streak-day-label { font-size: 10px; color: var(--color-text-muted); font-weight: 600; }
+    @keyframes pulseRing {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(196, 30, 58, 0.3); }
+      50% { box-shadow: 0 0 0 6px rgba(196, 30, 58, 0); }
+    }
+
+    /* Scratch Card */
+    .scratch-card {
+      width: 300px; height: 220px; border-radius: var(--radius-lg);
+      position: relative; overflow: hidden; margin: 0 auto 16px;
+      cursor: crosshair; box-shadow: var(--shadow-lg);
+      touch-action: none; /* prevent scroll while scratching */
+      -webkit-user-select: none; user-select: none;
+    }
+    .scratch-card canvas {
+      position: absolute; inset: 0; z-index: 2;
+      border-radius: var(--radius-lg);
+    }
+    .scratch-card-result {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 1;
+    }
+    .scratch-card-result.win { background: linear-gradient(135deg, #FFF8E1, #FFE082); }
+
+    /* Scratch progress indicator */
+    .scratch-progress {
+      width: 300px; height: 6px; border-radius: 3px;
+      background: var(--color-border); margin-bottom: 16px; overflow: hidden;
+    }
+    .scratch-progress-fill {
+      height: 100%; width: 0%; border-radius: 3px;
+      background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+      transition: width 0.3s ease;
+    }
+
+    /* Reward tiers display */
+    .reward-tiers {
+      display: flex; gap: 8px; margin-top: 12px; width: 100%; max-width: 320px;
+    }
+    .reward-tier {
+      flex: 1; background: white; border-radius: var(--radius);
+      padding: 10px 6px; text-align: center;
+      border: 1px solid var(--color-border); font-size: 12px;
+    }
+    .reward-tier-icon { font-size: 20px; margin-bottom: 4px; }
+    .reward-tier-value { font-weight: 700; color: var(--color-primary); font-size: 13px; }
+    .reward-tier-rate { font-size: 10px; color: var(--color-text-muted); margin-top: 2px; }
+
+    /* ============================================ */
+    /* ===== FLIP CARD GAME STYLES ===== */
+    /* ============================================ */
+
+    .flip-cards {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 16px; max-width: 380px; width: 100%; margin: 0 auto 20px;
+    }
+    .flip-card {
+      aspect-ratio: 3/4; border-radius: var(--radius);
+      cursor: pointer; perspective: 600px; position: relative;
+      min-height: 140px;
+    }
+    .flip-card-inner {
+      width: 100%; height: 100%; position: relative;
+      transition: transform 0.6s ease; transform-style: preserve-3d;
+    }
+    .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+    .flip-card.dimmed { opacity: 0.4; pointer-events: none; }
+    .flip-card-front, .flip-card-back {
+      position: absolute; inset: 0; border-radius: var(--radius);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; backface-visibility: hidden;
+    }
+    .flip-card-front {
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      color: white; font-size: 36px; box-shadow: var(--shadow);
+    }
+    .flip-card-front::after {
+      content: ''; position: absolute; inset: 6px;
+      border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;
+    }
+    .flip-card-back {
+      background: linear-gradient(135deg, #FFF8E1, #FFE082);
+      transform: rotateY(180deg); font-size: 40px;
+    }
+    .flip-card-back.lose-back { background: linear-gradient(135deg, #F5F5F5, #E0E0E0); }
+
+    /* ===== COUPON VISUAL ===== */
+    .coupon-visual {
+      background: linear-gradient(135deg, #FFF8E1, #FFE082);
+      border: 2px dashed var(--color-gold); border-radius: var(--radius);
+      padding: 20px; margin: 16px 0 8px; width: 100%; max-width: 280px;
+      position: relative;
+    }
+    .coupon-visual::before, .coupon-visual::after {
+      content: ''; position: absolute; width: 20px; height: 20px;
+      background: var(--color-bg); border-radius: 50%; top: 50%; transform: translateY(-50%);
+    }
+    .coupon-visual::before { left: -12px; }
+    .coupon-visual::after { right: -12px; }
+    .coupon-badge {
+      display: inline-block; background: var(--color-primary); color: white;
+      font-size: 11px; padding: 3px 10px; border-radius: 20px; margin-bottom: 8px; font-weight: 600;
+    }
+    .coupon-value { font-size: 28px; font-weight: 800; color: var(--color-primary); }
+    .coupon-desc { font-size: 12px; color: var(--color-text-light); margin-top: 4px; }
+
+    /* ===== COUPON WALLET ===== */
+    .wallet-list { width: 100%; max-width: 360px; }
+    .wallet-item {
+      display: flex; align-items: center; gap: 14px;
+      background: white; border-radius: var(--radius); padding: 14px 16px;
+      margin-bottom: 10px; border: 1px solid var(--color-border);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .wallet-item:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+    .wallet-item-icon {
+      width: 48px; height: 48px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; font-size: 24px;
+      flex-shrink: 0;
+    }
+    .wallet-item-icon.gold { background: linear-gradient(135deg, #FFF8E1, #FFE082); }
+    .wallet-item-icon.silver { background: linear-gradient(135deg, #F5F5F5, #E0E0E0); }
+    .wallet-item-icon.special { background: linear-gradient(135deg, #FFE0E6, #FFBAC8); }
+    .wallet-item-info { flex: 1; text-align: left; }
+    .wallet-item-value { font-size: 16px; font-weight: 700; color: var(--color-text); }
+    .wallet-item-date { font-size: 11px; color: var(--color-text-muted); margin-top: 2px; }
+    .wallet-item-status {
+      font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 600;
+    }
+    .wallet-item-status.active { background: #E8F5E9; color: var(--color-success); }
+    .wallet-item-status.used { background: #F5F5F5; color: #999; }
+    .wallet-item-status.expired { background: #FFF0F0; color: var(--color-error); }
+
+    /* ===== STREAK BONUS ===== */
+    .streak-bonus-card {
+      background: linear-gradient(135deg, #FFF0F3, #FFE0E6);
+      border: 2px solid var(--color-primary);
+      border-radius: var(--radius-lg); padding: 24px;
+      width: 100%; max-width: 320px; text-align: center;
+    }
+
+    /* ===== COOLDOWN ===== */
+    .cooldown-timer {
+      background: var(--color-bg-warm); border-radius: var(--radius);
+      padding: 16px 24px; margin: 16px 0; border: 1px solid var(--color-border);
+    }
+    .cooldown-timer .next-play-label { font-size: 12px; color: var(--color-text-muted); margin-bottom: 4px; }
+    .cooldown-timer .next-play-time { font-size: 20px; font-weight: 700; color: var(--color-primary); }
+
+    /* ===== CONFETTI ===== */
+    .confetti-container {
+      position: absolute; top: 0; left: 0; right: 0; height: 300px;
+      pointer-events: none; overflow: hidden;
+    }
+    .confetti {
+      position: absolute; width: 10px; height: 10px; border-radius: 2px;
+      animation: confetti-fall 2s ease-in forwards;
+    }
+    @keyframes confetti-fall {
+      0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(300px) rotate(720deg); opacity: 0; }
+    }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+    .pulse { animation: pulse 2s ease-in-out infinite; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.5s ease-out; }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* ===== PROGRESS DOTS ===== */
+    .progress-dots { display: flex; gap: 8px; margin-bottom: 20px; }
+    .progress-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-border); }
+    .progress-dot.active { background: var(--color-primary); }
+    .progress-dot.done { background: var(--color-success); }
+
+    /* ===== BOTTOM TAB (in-game) ===== */
+    .game-tabs {
+      display: flex; background: white; border-top: 1px solid var(--color-border);
+      position: relative;
+    }
+    .game-tab {
+      flex: 1; padding: 10px 0; text-align: center; cursor: pointer;
+      font-size: 12px; font-weight: 600; color: var(--color-text-muted);
+      border: none; background: none; font-family: var(--font-jp); transition: all 0.2s;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+    }
+    .game-tab.active { color: var(--color-primary); }
+    .game-tab-icon { font-size: 20px; }
+    .game-tab-badge {
+      position: absolute; top: 4px; right: calc(50% - 60px);
+      background: var(--color-primary); color: white;
+      font-size: 10px; width: 18px; height: 18px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-weight: 700;
+    }
+
+    /* ===== NAV PANEL ===== */
+    .proto-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #2D2D2D; color: white; z-index: 200;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px;
+    }
+    .proto-nav-toggle {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 16px; cursor: pointer; background: #1A1A1A;
+    }
+    .proto-nav-toggle span { font-weight: 600; }
+    .proto-nav-body { display: none; padding: 12px 16px; max-height: 50vh; overflow-y: auto; }
+    .proto-nav-body.open { display: block; }
+    .proto-nav-section { margin-bottom: 12px; }
+    .proto-nav-section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 6px; }
+    .proto-nav-links { display: flex; flex-wrap: wrap; gap: 6px; }
+    .proto-nav-link {
+      padding: 5px 10px; background: #444; border-radius: 6px;
+      cursor: pointer; transition: background 0.15s; font-size: 11px;
+    }
+    .proto-nav-link:hover { background: #666; }
+    .proto-nav-link.active-link { background: var(--color-primary); }
+
+    /* ===== SEASON BADGE ===== */
+    .season-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.15); padding: 4px 12px;
+      border-radius: 20px; font-size: 11px; margin-top: 4px;
+    }
+
+    /* ===== NATIVE APP HOME (mock) ===== */
+    .home-screen .screen-body {
+      background: var(--color-bg); padding: 0; justify-content: flex-start;
+      align-items: stretch; text-align: left;
+    }
+    .home-header {
+      background: white; padding: 12px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid #E5E5EA;
+    }
+    .home-header-left { display: flex; align-items: center; gap: 10px; }
+    .home-hamburger { font-size: 20px; color: #333; }
+    .home-scan {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 12px; color: var(--color-text-light);
+    }
+    .home-scan-icon {
+      width: 28px; height: 28px; border: 2px solid var(--color-primary);
+      border-radius: 6px; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; color: var(--color-primary);
+    }
+
+    /* Point card mock */
+    .home-point-card {
+      background: white; margin: 12px 16px; border-radius: var(--radius);
+      padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      border: 1px solid #E5E5EA;
+    }
+    .home-point-row {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .home-point-left { display: flex; align-items: center; gap: 8px; }
+    .home-point-logo { font-size: 28px; }
+    .home-point-label { font-size: 13px; color: var(--color-text-light); }
+    .home-point-value { font-size: 28px; font-weight: 800; color: var(--color-text); }
+    .home-point-unit { font-size: 14px; color: var(--color-text-light); margin-left: 2px; }
+    .home-barcode {
+      margin-top: 12px; text-align: center;
+      background: white; padding: 8px;
+      border: 1px solid #E5E5EA; border-radius: 6px;
+    }
+    .home-barcode-lines {
+      height: 40px; background: repeating-linear-gradient(
+        90deg, #222 0px, #222 2px, white 2px, white 4px,
+        #222 4px, #222 5px, white 5px, white 8px,
+        #222 8px, #222 10px, white 10px, white 11px,
+        #222 11px, #222 14px, white 14px, white 16px
+      );
+      margin-bottom: 4px;
+    }
+    .home-barcode-num { font-size: 11px; color: #666; letter-spacing: 2px; font-family: monospace; }
+    .home-barcode-hint { font-size: 10px; color: #999; margin-top: 4px; }
+    .home-point-actions {
+      display: flex; justify-content: center; gap: 16px; margin-top: 10px;
+    }
+    .home-point-action {
+      font-size: 12px; color: var(--color-primary);
+      border: 1px solid var(--color-primary); border-radius: 20px;
+      padding: 5px 16px; background: white; cursor: pointer;
+      font-family: var(--font-jp);
+    }
+
+    /* Brand row */
+    .home-brands {
+      display: flex; justify-content: center; gap: 12px;
+      padding: 12px 16px;
+    }
+    .home-brand {
+      width: 56px; height: 56px; border-radius: 50%;
+      border: 2px solid #E5E5EA; background: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; color: var(--color-text);
+      text-align: center; line-height: 1.1;
+    }
+    .home-brand.gusto { border-color: var(--color-primary); color: var(--color-primary); }
+    .home-brand.bamiyan { border-color: #E91E8C; color: #E91E8C; }
+    .home-brand.jonathans { border-color: #D4A017; color: #D4A017; }
+    .home-brand.syabuyo { border-color: #C41E3A; color: #C41E3A; }
+    .home-brand.yumean { border-color: #E91E63; color: #E91E63; }
+
+    /* Section header */
+    .home-section-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px 4px;
+    }
+    .home-section-title { font-size: 16px; font-weight: 800; color: var(--color-text); }
+    .home-section-link {
+      font-size: 12px; color: var(--color-primary); font-weight: 600;
+      border: 1px solid var(--color-primary); border-radius: 20px;
+      padding: 4px 14px; background: white; cursor: pointer;
+      font-family: var(--font-jp);
+    }
+
+    /* ===== GAME BANNER (the key element) ===== */
+    .game-banner {
+      margin: 8px 16px; border-radius: 16px; overflow: hidden;
+      cursor: pointer; position: relative;
+      box-shadow: 0 4px 20px rgba(180,120,40,0.35);
+      transition: transform 0.15s;
+      border: 3px solid #D4A040;
+    }
+    .game-banner:hover { transform: scale(1.02); }
+    .game-banner:active { transform: scale(0.98); }
+
+    .game-banner-inner {
+      position: relative; padding: 22px 18px 20px;
+      min-height: 170px; display: flex; align-items: center;
+      overflow: hidden;
+    }
+
+    /* Scratch banner — warm golden like screenshot */
+    .game-banner-scratch .game-banner-inner {
+      background:
+        radial-gradient(ellipse at 80% 60%, rgba(255,200,60,0.5) 0%, transparent 60%),
+        radial-gradient(ellipse at 20% 30%, rgba(255,160,60,0.3) 0%, transparent 50%),
+        linear-gradient(135deg, #FDE8B0 0%, #F9D47A 30%, #F0C050 60%, #E8B040 100%);
+    }
+    /* Flip banner — cool blue-purple */
+    .game-banner-flip .game-banner-inner {
+      background:
+        radial-gradient(ellipse at 80% 60%, rgba(130,180,255,0.5) 0%, transparent 60%),
+        radial-gradient(ellipse at 20% 30%, rgba(100,140,255,0.3) 0%, transparent 50%),
+        linear-gradient(135deg, #C5E0FF 0%, #90BFFF 30%, #6DA8F0 60%, #5090E0 100%);
+    }
+    .game-banner-flip { border-color: #6DA8F0; box-shadow: 0 4px 20px rgba(80,120,200,0.35); }
+
+    .game-banner-text {
+      flex: 1; z-index: 2; position: relative; max-width: 60%;
+    }
+    .game-banner-title {
+      font-size: 24px; font-weight: 900; color: #3D2200;
+      line-height: 1.35; margin-bottom: 4px;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+    }
+    .game-banner-flip .game-banner-title { color: #1A2E50; }
+    .game-banner-desc {
+      font-size: 11px; color: #6B4E20; line-height: 1.5; font-weight: 500;
+    }
+    .game-banner-flip .game-banner-desc { color: #2E4A70; }
+
+    .game-banner-badge {
+      position: absolute; top: -2px; right: 10px;
+      background: linear-gradient(135deg, #E53935, #C62828);
+      color: white;
+      font-size: 13px; font-weight: 800; padding: 6px 14px;
+      border-radius: 0 0 10px 10px; z-index: 4;
+      box-shadow: 0 3px 10px rgba(196,30,58,0.4);
+      letter-spacing: 0.5px;
+    }
+
+    .game-banner-emoji-row {
+      position: absolute; right: 6px; bottom: 6px;
+      display: flex; gap: 2px; z-index: 2;
+    }
+    .game-banner-emoji-row span {
+      font-size: 48px;
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.2));
+    }
+
+    .game-banner-question {
+      position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+      width: 72px; height: 72px; border-radius: 50%;
+      background: rgba(255,255,255,0.55);
+      border: 3px dashed rgba(180,120,30,0.5);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px; font-weight: 900; color: var(--color-primary);
+      z-index: 2; backdrop-filter: blur(2px);
+    }
+    .game-banner-flip .game-banner-question {
+      border-color: rgba(80,120,200,0.5);
+      color: #2E5AAA;
+    }
+
+    /* Decorative shapes inside banner */
+    .game-banner-inner::before {
+      content: ''; position: absolute;
+      width: 160px; height: 160px; border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      top: -40px; right: -20px; z-index: 0;
+    }
+    .game-banner-inner::after {
+      content: ''; position: absolute;
+      width: 80px; height: 80px; border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+      bottom: -20px; left: 30%; z-index: 0;
+    }
+
+    /* Other promo banner mock */
+    .home-promo {
+      margin: 8px 16px; border-radius: 14px; overflow: hidden;
+      background: linear-gradient(135deg, #FFF9C4 0%, #FFE082 50%, #FFCC80 100%);
+      padding: 16px 20px;
+      position: relative; min-height: 80px;
+      border: 1px solid #E8C860;
+    }
+    .home-promo-title {
+      font-size: 16px; font-weight: 800; color: #5D4000; line-height: 1.4;
+    }
+    .home-promo-badge {
+      position: absolute; top: 8px; right: 10px;
+      background: linear-gradient(135deg, #E53935, #C62828); color: white;
+      font-size: 10px; font-weight: 700; padding: 3px 10px;
+      border-radius: 10px;
+    }
+    .home-promo-emoji {
+      position: absolute; right: 12px; bottom: 8px; font-size: 44px; opacity: 0.5;
+    }
+
+    /* Bottom tab bar (native app mock) */
+    .home-tab-bar {
+      display: flex; background: white; border-top: 1px solid #E5E5EA;
+      padding: 6px 0 2px;
+    }
+    .home-tab {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      gap: 2px; font-size: 10px; color: #999; cursor: default;
+      border: none; background: none; font-family: var(--font-jp);
+    }
+    .home-tab.active-tab { color: var(--color-primary); }
+    .home-tab-icon { font-size: 22px; }
+
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+  </style>
+</head>
+<body>
+
+<div class="app-shell" id="app">
+
+  <!-- ======================================================== -->
+  <!-- NATIVE APP HOME — Banner game nhúng trong trang chủ app   -->
+  <!-- ======================================================== -->
+  <div class="screen active home-screen" id="screen-landing">
+    <!-- App header -->
+    <div class="home-header">
+      <div class="home-header-left">
+        <div class="home-hamburger">☰</div>
+      </div>
+      <div class="home-scan">
+        <div class="home-scan-icon">⊞</div>
+        店舗でスキャン
+      </div>
+    </div>
+
+    <div class="screen-body" style="overflow-y:auto;">
+
+      <!-- Point Card -->
+      <div class="home-point-card">
+        <div class="home-point-row">
+          <div class="home-point-left">
+            <div class="home-point-logo">🐢</div>
+            <div>
+              <div class="home-point-label">すかいらーくポイント ⓘ</div>
+            </div>
+          </div>
+          <div>
+            <span class="home-point-value">376</span>
+            <span class="home-point-unit">ポイント</span>
+          </div>
+        </div>
+        <div class="home-barcode">
+          <div class="home-barcode-lines"></div>
+          <div class="home-barcode-num">9900 4569 1299 2498</div>
+          <div class="home-barcode-hint">お会計時にバーコードをご提示ください</div>
+        </div>
+        <div class="home-point-actions">
+          <button class="home-point-action">ポイント履歴</button>
+          <button class="home-point-action" style="border:none;font-size:16px;padding:5px 8px;">↻</button>
+        </div>
+      </div>
+
+      <!-- Brand Row -->
+      <div class="home-brands">
+        <div class="home-brand gusto" style="font-size:9px;">GUSTO</div>
+        <div class="home-brand bamiyan" style="font-size:9px;">Bamiyan</div>
+        <div class="home-brand jonathans" style="font-size:8px;">Jonathan's</div>
+        <div class="home-brand syabuyo" style="font-size:8px;">SYABU-YO</div>
+        <div class="home-brand yumean" style="font-size:8px;">YUMEAN</div>
+      </div>
+
+      <!-- Section -->
+      <div class="home-section-row">
+        <div class="home-section-title">おすすめ</div>
+        <button class="home-section-link">メニュー一覧 ></button>
+      </div>
+
+      <!-- ★★★ GAME BANNER — Scratch ★★★ -->
+      <div class="game-banner game-banner-scratch" id="gameBannerScratch" onclick="navigateTo('screen-auth-loading')">
+        <div class="game-banner-inner">
+          <div class="game-banner-text">
+            <div class="game-banner-title">毎日スクラッチ<br>クーポンGET!</div>
+            <div class="game-banner-desc">100%当たる！最大1,000円OFFクーポン</div>
+          </div>
+          <div class="game-banner-badge">1日1回チャレンジ!</div>
+          <div class="game-banner-emoji-row">
+            <span>🎴</span>
+            <span>🎁</span>
+          </div>
+          <div class="game-banner-question">❓</div>
+        </div>
+      </div>
+
+      <!-- ★★★ GAME BANNER — Flip ★★★ -->
+      <div class="game-banner game-banner-flip" id="gameBannerFlip" onclick="navigateTo('screen-auth-loading')" style="display:none;">
+        <div class="game-banner-inner">
+          <div class="game-banner-text">
+            <div class="game-banner-title">カードをめくって<br>クーポンGET!</div>
+            <div class="game-banner-desc">1枚選んで運試し！お得なクーポンが当たる</div>
+          </div>
+          <div class="game-banner-badge">1日1回チャレンジ!</div>
+          <div class="game-banner-emoji-row">
+            <span>🃏</span>
+            <span>✨</span>
+          </div>
+          <div class="game-banner-question">❓</div>
+        </div>
+      </div>
+
+      <!-- Other promo banner (mock) -->
+      <div class="home-promo">
+        <div class="home-promo-title">マンゴー＆<br>スイーツフェア</div>
+        <div class="home-promo-badge">NEW</div>
+        <div class="home-promo-emoji">🥭</div>
+      </div>
+
+      <div style="height:16px;"></div>
+    </div>
+
+    <!-- Bottom Tab Bar -->
+    <div class="home-tab-bar">
+      <div class="home-tab active-tab"><div class="home-tab-icon">🏠</div>ホーム</div>
+      <div class="home-tab"><div class="home-tab-icon">🎫</div>クーポン</div>
+      <div class="home-tab"><div class="home-tab-icon">🍽️</div>予約</div>
+      <div class="home-tab"><div class="home-tab-icon">🔔</div>お知らせ</div>
+      <div class="home-tab"><div class="home-tab-icon">👤</div>アカウント</div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- SHARED: Auth Loading                                      -->
+  <!-- ======================================================== -->
+  <div class="screen" id="screen-auth-loading">
+    <div class="header-basic"><div style="font-size:15px;font-weight:600;">ミニゲーム</div></div>
+    <div class="screen-body">
+      <div class="spinner"></div>
+      <div class="title" style="font-size:18px;">認証中...</div>
+      <div class="subtitle">トークンを確認しています</div>
+      <div class="description">Validating your session</div>
+      <div class="progress-dots" style="margin-top:24px">
+        <div class="progress-dot active"></div><div class="progress-dot"></div><div class="progress-dot"></div>
+      </div>
+    </div>
+    <div class="footer">© 2026 Skylark Mini Game</div>
+  </div>
+
+  <!-- Auth Error screens -->
+  <div class="screen" id="screen-auth-token-missing">
+    <div class="header-basic"><div style="font-size:15px;font-weight:600;">ミニゲーム</div></div>
+    <div class="screen-body">
+      <div class="icon icon-error">⚠️</div>
+      <div class="title">認証トークンがありません</div>
+      <div class="subtitle">アプリからアクセスしてください。</div>
+      <div class="description">No authentication token was received.</div>
+    </div>
+    <div class="footer">© 2026 Skylark Mini Game</div>
+  </div>
+
+  <div class="screen" id="screen-auth-token-expired">
+    <div class="header-basic"><div style="font-size:15px;font-weight:600;">ミニゲーム</div></div>
+    <div class="screen-body">
+      <div class="icon icon-error">⏰</div>
+      <div class="title">セッションの有効期限が切れました</div>
+      <div class="subtitle">アプリに戻り、もう一度お試しください。</div>
+      <div class="description">Your session has expired.</div>
+    </div>
+    <div class="footer">© 2026 Skylark Mini Game</div>
+  </div>
+
+  <div class="screen" id="screen-auth-token-invalid">
+    <div class="header-basic"><div style="font-size:15px;font-weight:600;">ミニゲーム</div></div>
+    <div class="screen-body">
+      <div class="icon icon-error">🔒</div>
+      <div class="title">認証に失敗しました</div>
+      <div class="subtitle">トークンが無効です。アプリからやり直してください。</div>
+      <div class="description">Authentication failed. Invalid token.</div>
+    </div>
+    <div class="footer">© 2026 Skylark Mini Game</div>
+  </div>
+
+  <div class="screen" id="screen-auth-server-error">
+    <div class="header-basic"><div style="font-size:15px;font-weight:600;">ミニゲーム</div></div>
+    <div class="screen-body">
+      <div class="icon icon-error">🌐</div>
+      <div class="title">サーバーに接続できません</div>
+      <div class="subtitle">しばらくしてからもう一度お試しください。</div>
+      <div class="description">Unable to connect to the server.</div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="navigateTo('screen-auth-loading')">再試行する</button>
+      </div>
+    </div>
+    <div class="footer">© 2026 Skylark Mini Game</div>
+  </div>
+
+  <!-- Session Loading -->
+  <div class="screen" id="screen-session-loading">
+    <div class="header"><div class="header-title">ミニゲーム</div><div class="header-subtitle">MINI GAME</div></div>
+    <div class="screen-body">
+      <div class="spinner"></div>
+      <div class="title" style="font-size:18px;">ゲームを準備しています...</div>
+      <div class="subtitle">プレイ資格を確認中</div>
+      <div class="progress-dots" style="margin-top:24px">
+        <div class="progress-dot done"></div><div class="progress-dot active"></div><div class="progress-dot"></div>
+      </div>
+    </div>
+    <div class="footer">© 2026 Skylark Mini Game</div>
+  </div>
+
+  <div class="screen" id="screen-session-error">
+    <div class="header"><div class="header-title">ミニゲーム</div><div class="header-subtitle">MINI GAME</div></div>
+    <div class="screen-body">
+      <div class="icon icon-error">🌐</div>
+      <div class="title">確認中にエラーが発生しました</div>
+      <div class="subtitle">セッションの確認に失敗しました。</div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="navigateTo('screen-session-loading')">再試行する</button>
+      </div>
+    </div>
+    <div class="footer">© 2026 Skylark Mini Game</div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- GAME 1: SCRATCH CARD — Cào trúng thưởng                  -->
+  <!-- ======================================================== -->
+
+  <!-- Scratch: Main Game Screen with Daily Streak -->
+  <div class="screen" id="screen-scratch-main">
+    <div class="header">
+      <div class="header-title">スクラッチくじ</div>
+      <div class="header-subtitle">SCRATCH & WIN</div>
+      <div class="season-badge">🌸 春キャンペーン</div>
+    </div>
+    <div class="screen-body" style="justify-content:flex-start;padding-top:16px;padding-bottom:60px;">
+      <div class="deco-pattern"></div>
+
+      <!-- Daily Streak Bar -->
+      <div class="streak-bar fade-in">
+        <div class="streak-header">
+          <div class="streak-title">デイリーチャレンジ</div>
+          <div class="streak-count">🔥 3日連続</div>
+        </div>
+        <div class="streak-days">
+          <div class="streak-day">
+            <div class="streak-day-circle done">✓</div>
+            <div class="streak-day-label">月</div>
+          </div>
+          <div class="streak-day">
+            <div class="streak-day-circle done">✓</div>
+            <div class="streak-day-label">火</div>
+          </div>
+          <div class="streak-day">
+            <div class="streak-day-circle done">✓</div>
+            <div class="streak-day-label">水</div>
+          </div>
+          <div class="streak-day">
+            <div class="streak-day-circle today">4</div>
+            <div class="streak-day-label">木</div>
+          </div>
+          <div class="streak-day">
+            <div class="streak-day-circle">5</div>
+            <div class="streak-day-label">金</div>
+          </div>
+          <div class="streak-day">
+            <div class="streak-day-circle">6</div>
+            <div class="streak-day-label">土</div>
+          </div>
+          <div class="streak-day">
+            <div class="streak-day-circle bonus">🎁</div>
+            <div class="streak-day-label" style="color:var(--color-gold);font-weight:700;">特別</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scratch instruction -->
+      <div style="font-size:14px;color:var(--color-text);font-weight:600;margin-bottom:12px;">
+        今日のスクラッチ — <span style="color:var(--color-primary);">1回無料！</span>
+      </div>
+
+      <!-- Scratch Card (real canvas scratch) -->
+      <div class="scratch-card" id="scratchCard">
+        <div class="scratch-card-result win" id="scratchResult">
+          <div style="font-size:48px;margin-bottom:8px;">🎉</div>
+          <div style="font-size:22px;font-weight:800;color:#C41E3A;">200円OFF</div>
+          <div style="font-size:13px;color:#7A6455;margin-top:4px;">クーポンを獲得！</div>
+        </div>
+        <canvas id="scratchCanvas" width="300" height="220"></canvas>
+      </div>
+
+      <!-- Scratch Progress -->
+      <div class="scratch-progress" id="scratchProgressBar">
+        <div class="scratch-progress-fill" id="scratchProgressFill"></div>
+      </div>
+
+      <div style="font-size:12px;color:var(--color-text-muted);margin-bottom:16px;">
+        スクラッチして結果を確認！100%クーポンがもらえる！
+      </div>
+
+      <!-- Reward Tiers -->
+      <div class="reward-tiers">
+        <div class="reward-tier">
+          <div class="reward-tier-icon">🥉</div>
+          <div class="reward-tier-value">100円</div>
+          <div class="reward-tier-rate">60%</div>
+        </div>
+        <div class="reward-tier">
+          <div class="reward-tier-icon">🥈</div>
+          <div class="reward-tier-value">200円</div>
+          <div class="reward-tier-rate">25%</div>
+        </div>
+        <div class="reward-tier">
+          <div class="reward-tier-icon">🥇</div>
+          <div class="reward-tier-value">500円</div>
+          <div class="reward-tier-rate">10%</div>
+        </div>
+        <div class="reward-tier">
+          <div class="reward-tier-icon">💎</div>
+          <div class="reward-tier-value">1000円</div>
+          <div class="reward-tier-rate">5%</div>
+        </div>
+      </div>
+    </div>
+    <!-- Bottom Tabs -->
+    <div class="game-tabs">
+      <button class="game-tab active" onclick="navigateTo('screen-scratch-main')">
+        <span class="game-tab-icon">🎴</span>スクラッチ
+      </button>
+      <button class="game-tab" onclick="navigateTo('screen-scratch-wallet')">
+        <span class="game-tab-icon">🎫</span>クーポン
+        <span class="game-tab-badge">3</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Scratch: Result - Win (always wins, different values) -->
+  <div class="screen" id="screen-scratch-result">
+    <div class="header">
+      <div class="header-title">スクラッチくじ</div>
+      <div class="header-subtitle">SCRATCH & WIN</div>
+    </div>
+    <div class="screen-body fade-in" style="justify-content:flex-start;padding-top:24px;padding-bottom:60px;">
+      <div class="confetti-container" id="confettiScratch"></div>
+
+      <div style="font-size:56px;margin-bottom:8px;">🎊</div>
+      <div class="title" style="font-size:24px;color:var(--color-primary);">おめでとうございます！</div>
+      <div class="subtitle">クーポンを獲得しました！</div>
+
+      <div class="coupon-visual" style="margin-top:20px;">
+        <div class="coupon-badge">本日の報酬</div>
+        <div class="coupon-value">200円OFF</div>
+        <div class="coupon-desc">次回のお食事にご利用いただけます</div>
+      </div>
+
+      <!-- Updated Streak -->
+      <div class="streak-bar" style="margin-top:20px;">
+        <div class="streak-header">
+          <div class="streak-title">デイリーチャレンジ</div>
+          <div class="streak-count">🔥 4日連続！</div>
+        </div>
+        <div class="streak-days">
+          <div class="streak-day"><div class="streak-day-circle done">✓</div><div class="streak-day-label">月</div></div>
+          <div class="streak-day"><div class="streak-day-circle done">✓</div><div class="streak-day-label">火</div></div>
+          <div class="streak-day"><div class="streak-day-circle done">✓</div><div class="streak-day-label">水</div></div>
+          <div class="streak-day"><div class="streak-day-circle done">✓</div><div class="streak-day-label">木</div></div>
+          <div class="streak-day"><div class="streak-day-circle">5</div><div class="streak-day-label">金</div></div>
+          <div class="streak-day"><div class="streak-day-circle">6</div><div class="streak-day-label">土</div></div>
+          <div class="streak-day"><div class="streak-day-circle bonus">🎁</div><div class="streak-day-label" style="color:var(--color-gold);font-weight:700;">特別</div></div>
+        </div>
+      </div>
+
+      <div class="btn-group" style="margin-top:20px;">
+        <button class="btn btn-primary" onclick="navigateTo('screen-reward-loading')">🎁 クーポンを受け取る</button>
+        <button class="btn btn-gold" onclick="navigateTo('screen-reward-loading')">🍽️ 今すぐ使う</button>
+        <button class="btn btn-ghost" onclick="navigateTo('screen-scratch-wallet')">🎫 クーポン一覧を見る</button>
+      </div>
+    </div>
+    <div class="game-tabs">
+      <button class="game-tab active"><span class="game-tab-icon">🎴</span>スクラッチ</button>
+      <button class="game-tab" onclick="navigateTo('screen-scratch-wallet')"><span class="game-tab-icon">🎫</span>クーポン<span class="game-tab-badge">4</span></button>
+    </div>
+  </div>
+
+  <!-- Scratch: 7-Day Streak Bonus -->
+  <div class="screen" id="screen-scratch-streak-bonus">
+    <div class="header">
+      <div class="header-title">スクラッチくじ</div>
+      <div class="header-subtitle">SCRATCH & WIN</div>
+    </div>
+    <div class="screen-body fade-in" style="justify-content:flex-start;padding-top:24px;">
+      <div class="confetti-container" id="confettiStreak"></div>
+
+      <div style="font-size:64px;margin-bottom:12px;">🏆</div>
+      <div class="title" style="font-size:24px;color:var(--color-gold);">7日間連続達成！</div>
+      <div class="subtitle">特別ボーナスをゲット！</div>
+
+      <div class="streak-bar" style="margin-top:16px;">
+        <div class="streak-days">
+          <div class="streak-day"><div class="streak-day-circle done">✓</div><div class="streak-day-label">月</div></div>
+          <div class="streak-day"><div class="streak-day-circle done">✓</div><div class="streak-day-label">火</div></div>
+          <div class="streak-day"><div class="streak-day-circle done">✓</div><div class="streak-day-label">水</div></div>
+          <div class="streak-day"><div class="streak-day-circle done">✓</div><div class="streak-day-label">木</div></div>
+          <div class="streak-day"><div class="streak-day-circle done">✓</div><div class="streak-day-label">金</div></div>
+          <div class="streak-day"><div class="streak-day-circle done">✓</div><div class="streak-day-label">土</div></div>
+          <div class="streak-day"><div class="streak-day-circle bonus done">✓</div><div class="streak-day-label" style="color:var(--color-gold);font-weight:700;">特別</div></div>
+        </div>
+      </div>
+
+      <div class="streak-bonus-card" style="margin-top:20px;">
+        <div style="font-size:40px;margin-bottom:8px;">🎁</div>
+        <div style="font-size:22px;font-weight:800;color:var(--color-primary);">1,000円OFF</div>
+        <div style="font-size:14px;color:var(--color-text-light);margin-top:4px;">スペシャルクーポン</div>
+        <div style="font-size:12px;color:var(--color-text-muted);margin-top:8px;">7日間のチャレンジ達成おめでとうございます！<br>特別なクーポンをお楽しみください。</div>
+      </div>
+
+      <div class="btn-group" style="margin-top:24px;">
+        <button class="btn btn-primary" onclick="navigateTo('screen-reward-loading')">🎁 特別クーポンを受け取る</button>
+        <button class="btn btn-gold" onclick="navigateTo('screen-reward-loading')">🍽️ 今すぐ使う</button>
+      </div>
+    </div>
+    <div class="footer">© 2026 Skylark Mini Game</div>
+  </div>
+
+  <!-- Scratch: Coupon Wallet -->
+  <div class="screen" id="screen-scratch-wallet">
+    <div class="header">
+      <div class="header-title">マイクーポン</div>
+      <div class="header-subtitle">MY COUPONS</div>
+    </div>
+    <div class="screen-body" style="justify-content:flex-start;padding-top:20px;padding-bottom:60px;">
+      <div class="label-small" style="margin-bottom:16px;align-self:flex-start;">獲得済みクーポン</div>
+
+      <div class="wallet-list">
+        <div class="wallet-item" onclick="navigateTo('screen-reward-loading')">
+          <div class="wallet-item-icon gold">🥈</div>
+          <div class="wallet-item-info">
+            <div class="wallet-item-value">200円OFF</div>
+            <div class="wallet-item-date">2026/08/06 獲得 · 有効期限 08/31</div>
+          </div>
+          <div class="wallet-item-status active">利用可</div>
+        </div>
+        <div class="wallet-item" onclick="navigateTo('screen-reward-loading')">
+          <div class="wallet-item-icon gold">🥉</div>
+          <div class="wallet-item-info">
+            <div class="wallet-item-value">100円OFF</div>
+            <div class="wallet-item-date">2026/08/05 獲得 · 有効期限 08/31</div>
+          </div>
+          <div class="wallet-item-status active">利用可</div>
+        </div>
+        <div class="wallet-item" onclick="navigateTo('screen-reward-loading')">
+          <div class="wallet-item-icon gold">🥇</div>
+          <div class="wallet-item-info">
+            <div class="wallet-item-value">500円OFF</div>
+            <div class="wallet-item-date">2026/08/04 獲得 · 有効期限 08/31</div>
+          </div>
+          <div class="wallet-item-status active">利用可</div>
+        </div>
+        <div class="wallet-item" style="opacity:0.6;">
+          <div class="wallet-item-icon silver">🥉</div>
+          <div class="wallet-item-info">
+            <div class="wallet-item-value">100円OFF</div>
+            <div class="wallet-item-date">2026/07/28 獲得</div>
+          </div>
+          <div class="wallet-item-status used">使用済</div>
+        </div>
+        <div class="wallet-item" style="opacity:0.6;">
+          <div class="wallet-item-icon special">💎</div>
+          <div class="wallet-item-info">
+            <div class="wallet-item-value">1000円OFF (7日ボーナス)</div>
+            <div class="wallet-item-date">2026/07/27 獲得</div>
+          </div>
+          <div class="wallet-item-status used">使用済</div>
+        </div>
+      </div>
+    </div>
+    <div class="game-tabs">
+      <button class="game-tab" onclick="navigateTo('screen-scratch-main')"><span class="game-tab-icon">🎴</span>スクラッチ</button>
+      <button class="game-tab active" onclick="navigateTo('screen-scratch-wallet')"><span class="game-tab-icon">🎫</span>クーポン</button>
+    </div>
+  </div>
+
+  <!-- Scratch: Streak Reset Warning -->
+  <div class="screen" id="screen-scratch-streak-reset">
+    <div class="header">
+      <div class="header-title">スクラッチくじ</div>
+      <div class="header-subtitle">SCRATCH & WIN</div>
+    </div>
+    <div class="screen-body">
+      <div style="font-size:48px;margin-bottom:16px;">😢</div>
+      <div class="title" style="font-size:20px;">チャレンジがリセットされました</div>
+      <div class="subtitle" style="max-width:300px;">
+        昨日スクラッチをプレイしなかったため、<br>連続記録がリセットされました。
+      </div>
+      <div class="description">また1日目から頑張りましょう！</div>
+
+      <div class="streak-bar" style="margin-top:16px;">
+        <div class="streak-header">
+          <div class="streak-title">デイリーチャレンジ</div>
+          <div class="streak-count" style="background:#F5F5F5;color:#999;">リセット</div>
+        </div>
+        <div class="streak-days">
+          <div class="streak-day"><div class="streak-day-circle today">1</div><div class="streak-day-label">今日</div></div>
+          <div class="streak-day"><div class="streak-day-circle">2</div><div class="streak-day-label">明日</div></div>
+          <div class="streak-day"><div class="streak-day-circle">3</div><div class="streak-day-label">3日</div></div>
+          <div class="streak-day"><div class="streak-day-circle">4</div><div class="streak-day-label">4日</div></div>
+          <div class="streak-day"><div class="streak-day-circle">5</div><div class="streak-day-label">5日</div></div>
+          <div class="streak-day"><div class="streak-day-circle">6</div><div class="streak-day-label">6日</div></div>
+          <div class="streak-day"><div class="streak-day-circle bonus">🎁</div><div class="streak-day-label" style="color:var(--color-gold);font-weight:700;">特別</div></div>
+        </div>
+      </div>
+
+      <div class="btn-group" style="margin-top:24px;">
+        <button class="btn btn-primary" onclick="navigateTo('screen-scratch-main')">今日のスクラッチを始める</button>
+      </div>
+    </div>
+    <div class="footer">© 2026 Skylark Mini Game</div>
+  </div>
+
+  <!-- Scratch: Cooldown -->
+  <div class="screen" id="screen-scratch-cooldown">
+    <div class="header">
+      <div class="header-title">スクラッチくじ</div>
+      <div class="header-subtitle">SCRATCH & WIN</div>
+    </div>
+    <div class="screen-body fade-in">
+      <div style="font-size:56px;margin-bottom:16px;">🌙</div>
+      <div class="title">本日のスクラッチはお済みです</div>
+      <div class="subtitle" style="max-width:280px;">明日またチャレンジしよう！<br>連続プレイでボーナスを狙おう！</div>
+
+      <div class="streak-bar" style="margin-top:20px;">
+        <div class="streak-header">
+          <div class="streak-title">デイリーチャレンジ</div>
+          <div class="streak-count">🔥 4日連続</div>
+        </div>
+        <div class="streak-days">
+          <div class="streak-day"><div class="streak-day-circle done">✓</div><div class="streak-day-label">月</div></div>
+          <div class="streak-day"><div class="streak-day-circle done">✓</div><div class="streak-day-label">火</div></div>
+          <div class="streak-day"><div class="streak-day-circle done">✓</div><div class="streak-day-label">水</div></div>
+          <div class="streak-day"><div class="streak-day-circle done">✓</div><div class="streak-day-label">木</div></div>
+          <div class="streak-day"><div class="streak-day-circle">5</div><div class="streak-day-label">金</div></div>
+          <div class="streak-day"><div class="streak-day-circle">6</div><div class="streak-day-label">土</div></div>
+          <div class="streak-day"><div class="streak-day-circle bonus">🎁</div><div class="streak-day-label" style="color:var(--color-gold);font-weight:700;">特別</div></div>
+        </div>
+      </div>
+
+      <div class="cooldown-timer" style="margin-top:16px;">
+        <div class="next-play-label">次回プレイ可能時間</div>
+        <div class="next-play-time">明日 8月7日 00:00〜</div>
+      </div>
+
+      <div class="btn-group" style="margin-top:20px;">
+        <button class="btn btn-secondary" onclick="navigateTo('screen-scratch-wallet')">🎫 クーポン一覧を見る</button>
+        <button class="btn btn-ghost" onclick="alert('→ {webViewHost}/close に遷移します')">アプリに戻る</button>
+      </div>
+    </div>
+    <div class="footer">© 2026 Skylark Mini Game</div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- GAME 2: FLIP CARD — Lật thẻ (season-based)               -->
+  <!-- ======================================================== -->
+
+  <div class="screen" id="screen-game-flip">
+    <div class="header">
+      <div class="header-title">フリップカード</div>
+      <div class="header-subtitle">FLIP CARD</div>
+      <div class="season-badge">🎆 夏キャンペーン</div>
+    </div>
+    <div class="screen-body" style="justify-content:flex-start;padding-top:24px;">
+      <div class="deco-pattern"></div>
+      <div class="label-small" style="margin-bottom:16px;">カードを1枚選んでタップ！</div>
+
+      <div class="flip-cards" id="flipCards">
+        <div class="flip-card" onclick="handleFlip(this, true)">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">🎴</div>
+            <div class="flip-card-back"><div>🎉</div><div style="font-size:16px;font-weight:700;color:#C41E3A;margin-top:4px;">当たり</div></div>
+          </div>
+        </div>
+        <div class="flip-card" onclick="handleFlip(this, false)">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">🎴</div>
+            <div class="flip-card-back lose-back"><div>💨</div><div style="font-size:16px;font-weight:700;color:#888;margin-top:4px;">はずれ</div></div>
+          </div>
+        </div>
+        <div class="flip-card" onclick="handleFlip(this, false)">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">🎴</div>
+            <div class="flip-card-back lose-back"><div>💨</div><div style="font-size:16px;font-weight:700;color:#888;margin-top:4px;">はずれ</div></div>
+          </div>
+        </div>
+        <div class="flip-card" onclick="handleFlip(this, false)">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">🎴</div>
+            <div class="flip-card-back lose-back"><div>💨</div><div style="font-size:16px;font-weight:700;color:#888;margin-top:4px;">はずれ</div></div>
+          </div>
+        </div>
+        <div class="flip-card" onclick="handleFlip(this, false)">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">🎴</div>
+            <div class="flip-card-back lose-back"><div>💨</div><div style="font-size:16px;font-weight:700;color:#888;margin-top:4px;">はずれ</div></div>
+          </div>
+        </div>
+        <div class="flip-card" onclick="handleFlip(this, false)">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">🎴</div>
+            <div class="flip-card-back lose-back"><div>💨</div><div style="font-size:16px;font-weight:700;color:#888;margin-top:4px;">はずれ</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="description" style="margin-top:8px;">1枚のカードを選んでタップ！<br>チャンスは1回だけです</div>
+    </div>
+    <div class="footer">© 2026 Skylark Mini Game</div>
+  </div>
+
+  <!-- Flip: Result Win -->
+  <div class="screen" id="screen-flip-result-win">
+    <div class="header"><div class="header-title">フリップカード</div><div class="header-subtitle">FLIP CARD</div></div>
+    <div class="screen-body fade-in" style="justify-content:flex-start;padding-top:32px;">
+      <div class="confetti-container" id="confettiFlip"></div>
+      <div style="font-size:56px;margin-bottom:12px;">🎊</div>
+      <div class="title" style="font-size:26px;color:var(--color-primary);">おめでとうございます！</div>
+      <div class="subtitle">クーポンが当たりました！</div>
+      <div class="coupon-visual">
+        <div class="coupon-badge">限定クーポン</div>
+        <div class="coupon-value">500円OFF</div>
+        <div class="coupon-desc">次回のお食事にご利用いただけます</div>
+      </div>
+      <div class="btn-group" style="margin-top:24px;">
+        <button class="btn btn-primary" onclick="navigateTo('screen-reward-loading')">🎁 クーポンを受け取る</button>
+        <button class="btn btn-gold" onclick="navigateTo('screen-reward-loading')">🍽️ 今すぐ使う</button>
+      </div>
+    </div>
+    <div class="footer">© 2026 Skylark Mini Game</div>
+  </div>
+
+  <!-- Flip: Result Lose -->
+  <div class="screen" id="screen-flip-result-lose">
+    <div class="header"><div class="header-title">フリップカード</div><div class="header-subtitle">FLIP CARD</div></div>
+    <div class="screen-body fade-in">
+      <div style="font-size:56px;margin-bottom:16px;">🍃</div>
+      <div class="title" style="font-size:22px;">残念...！</div>
+      <div class="subtitle" style="max-width:280px;">今回は当たりませんでしたが、<br>またチャレンジしてくださいね！</div>
+      <div style="font-size:40px;margin:24px 0;">🌸</div>
+      <div class="subtitle" style="font-size:14px;color:var(--color-text-muted);">次回のチャレンジをお楽しみに！</div>
+      <div class="btn-group" style="margin-top:32px;">
+        <button class="btn btn-secondary" onclick="alert('→ {webViewHost}/close に遷移します')">アプリに戻る</button>
+      </div>
+    </div>
+    <div class="footer">© 2026 Skylark Mini Game</div>
+  </div>
+
+  <!-- Flip: Cooldown -->
+  <div class="screen" id="screen-flip-cooldown">
+    <div class="header"><div class="header-title">フリップカード</div><div class="header-subtitle">FLIP CARD</div></div>
+    <div class="screen-body fade-in">
+      <div style="font-size:56px;margin-bottom:16px;">🌙</div>
+      <div class="title">本日の挑戦はお済みです</div>
+      <div class="subtitle" style="max-width:280px;">明日またチャレンジしよう！</div>
+      <div class="cooldown-timer">
+        <div class="next-play-label">次回プレイ可能時間</div>
+        <div class="next-play-time">明日 8月7日 08:00〜</div>
+      </div>
+      <div style="font-size:40px;margin:16px 0;">🌸</div>
+      <div class="btn-group" style="margin-top:24px;">
+        <button class="btn btn-secondary" onclick="alert('→ {webViewHost}/close に遷移します')">アプリに戻る</button>
+      </div>
+    </div>
+    <div class="footer">© 2026 Skylark Mini Game</div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- SHARED: Reward / Coupon Screens                           -->
+  <!-- ======================================================== -->
+
+  <div class="screen" id="screen-reward-loading">
+    <div class="header"><div class="header-title">ミニゲーム</div><div class="header-subtitle">MINI GAME</div></div>
+    <div class="screen-body">
+      <div style="font-size:48px;margin-bottom:16px;">🎁</div>
+      <div class="spinner"></div>
+      <div class="title" style="font-size:18px;">クーポンを準備しています...</div>
+      <div class="subtitle">少々お待ちください</div>
+    </div>
+    <div class="footer">© 2026 Skylark Mini Game</div>
+  </div>
+
+  <div class="screen" id="screen-reward-error">
+    <div class="header"><div class="header-title">ミニゲーム</div><div class="header-subtitle">MINI GAME</div></div>
+    <div class="screen-body">
+      <div style="font-size:56px;margin-bottom:12px;">🎊</div>
+      <div class="title" style="font-size:22px;color:var(--color-primary);">おめでとうございます！</div>
+      <div class="subtitle" style="margin-bottom:24px;">クーポンが当たりました！</div>
+      <div class="card" style="background:#FFF5F5;border:1px solid #FFCDD2;">
+        <div class="icon icon-error" style="margin:0 auto 16px;">⚠️</div>
+        <div class="title" style="font-size:16px;">クーポンの発行に失敗しました</div>
+        <div class="subtitle" style="font-size:13px;">もう一度お試しください。</div>
+        <button class="btn btn-primary" onclick="navigateTo('screen-reward-loading')" style="margin-top:12px;">再試行する</button>
+      </div>
+    </div>
+    <div class="footer">© 2026 Skylark Mini Game</div>
+  </div>
+
+  <div class="screen" id="screen-coupon-delivery">
+    <div class="header"><div class="header-title">ミニゲーム</div><div class="header-subtitle">MINI GAME</div></div>
+    <div class="screen-body">
+      <div class="icon icon-success pulse" style="font-size:48px;">✅</div>
+      <div class="title" style="font-size:22px;color:var(--color-success);">クーポンを獲得しました！</div>
+      <div class="subtitle">アプリに移動しています...</div>
+      <div style="margin-top:24px;padding:16px;background:var(--color-bg-warm);border-radius:var(--radius);font-size:12px;color:var(--color-text-muted);max-width:300px;">
+        <div style="font-weight:600;margin-bottom:4px;">AppLink 遷移先:</div>
+        <code style="font-size:11px;word-break:break-all;">https://www.skylark.co.jp/app/coupon/segment?id={couponId}</code>
+      </div>
+    </div>
+    <div class="footer">© 2026 Skylark Mini Game</div>
+  </div>
+
+  <!-- Game Server Error -->
+  <div class="screen" id="screen-game-server-error">
+    <div class="header"><div class="header-title">ミニゲーム</div><div class="header-subtitle">MINI GAME</div></div>
+    <div class="screen-body">
+      <div class="icon icon-error">🌐</div>
+      <div class="title">エラーが発生しました</div>
+      <div class="subtitle">ゲーム結果の取得に失敗しました。<br>プレイ回数は消費されていません。</div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="navigateTo('screen-scratch-main')">再試行する</button>
+      </div>
+    </div>
+    <div class="footer">© 2026 Skylark Mini Game</div>
+  </div>
+
+</div><!-- /app-shell -->
+
+<!-- ======================================================== -->
+<!-- PROTOTYPE NAVIGATION PANEL                                 -->
+<!-- ======================================================== -->
+<nav class="proto-nav" id="protoNav">
+  <div class="proto-nav-toggle" onclick="toggleNav()">
+    <span>🗺️ プロトタイプ ナビゲーション — 2ゲーム切替対応</span>
+    <span id="navArrow">▲</span>
+  </div>
+  <div class="proto-nav-body" id="navBody">
+
+    <!-- Season Selector -->
+    <div class="proto-nav-section">
+      <div class="proto-nav-section-title">🗓️ シーズン切替 (Deploy Config)</div>
+      <div class="season-selector" style="max-width:300px;">
+        <button class="season-btn active" id="seasonScratch" onclick="switchSeason('scratch')">
+          <span class="season-icon">🌸</span> スクラッチくじ
+        </button>
+        <button class="season-btn" id="seasonFlip" onclick="switchSeason('flip')">
+          <span class="season-icon">🎆</span> フリップカード
+        </button>
+      </div>
+    </div>
+
+    <div class="proto-nav-section">
+      <div class="proto-nav-section-title">共通: ランディング & 認証</div>
+      <div class="proto-nav-links">
+        <div class="proto-nav-link" onclick="navigateTo('screen-landing')" style="background:#C41E3A;">アプリ トップ</div>
+        <div class="proto-nav-link" onclick="navigateTo('screen-auth-loading')">認証中</div>
+        <div class="proto-nav-link" onclick="navigateTo('screen-auth-token-missing')">トークン無し</div>
+        <div class="proto-nav-link" onclick="navigateTo('screen-auth-token-expired')">期限切れ</div>
+        <div class="proto-nav-link" onclick="navigateTo('screen-auth-token-invalid')">無効トークン</div>
+        <div class="proto-nav-link" onclick="navigateTo('screen-auth-server-error')">認証エラー</div>
+        <div class="proto-nav-link" onclick="navigateTo('screen-session-loading')">資格確認中</div>
+        <div class="proto-nav-link" onclick="navigateTo('screen-session-error')">確認エラー</div>
+      </div>
+    </div>
+
+    <div class="proto-nav-section" id="navScratchSection">
+      <div class="proto-nav-section-title">🎴 Game 1: スクラッチくじ (Cào trúng thưởng)</div>
+      <div class="proto-nav-links">
+        <div class="proto-nav-link" onclick="navigateTo('screen-scratch-main')">メイン画面</div>
+        <div class="proto-nav-link" onclick="navigateTo('screen-scratch-result')">結果 (100%当たり)</div>
+        <div class="proto-nav-link" onclick="navigateTo('screen-scratch-streak-bonus')">7日ボーナス</div>
+        <div class="proto-nav-link" onclick="navigateTo('screen-scratch-streak-reset')">ストリークリセット</div>
+        <div class="proto-nav-link" onclick="navigateTo('screen-scratch-wallet')">クーポン一覧</div>
+        <div class="proto-nav-link" onclick="navigateTo('screen-scratch-cooldown')">プレイ済み</div>
+      </div>
+    </div>
+
+    <div class="proto-nav-section" id="navFlipSection">
+      <div class="proto-nav-section-title">🃏 Game 2: フリップカード (Lật thẻ)</div>
+      <div class="proto-nav-links">
+        <div class="proto-nav-link" onclick="navigateTo('screen-game-flip')">ゲーム画面</div>
+        <div class="proto-nav-link" onclick="navigateTo('screen-flip-result-win')">当たり！</div>
+        <div class="proto-nav-link" onclick="navigateTo('screen-flip-result-lose')">はずれ</div>
+        <div class="proto-nav-link" onclick="navigateTo('screen-flip-cooldown')">プレイ済み</div>
+      </div>
+    </div>
+
+    <div class="proto-nav-section">
+      <div class="proto-nav-section-title">共通: リワード / クーポン</div>
+      <div class="proto-nav-links">
+        <div class="proto-nav-link" onclick="navigateTo('screen-reward-loading')">クーポン準備中</div>
+        <div class="proto-nav-link" onclick="navigateTo('screen-reward-error')">発行エラー</div>
+        <div class="proto-nav-link" onclick="navigateTo('screen-coupon-delivery')">クーポン遷移</div>
+        <div class="proto-nav-link" onclick="navigateTo('screen-game-server-error')">ゲームエラー</div>
+      </div>
+    </div>
+
+    <div class="proto-nav-section" style="border-top:1px solid #444;padding-top:10px;margin-top:4px;">
+      <div class="proto-nav-section-title">ハッピーパス (Happy Path Demo)</div>
+      <div class="proto-nav-links">
+        <div class="proto-nav-link" style="background:#C41E3A;" onclick="runHappyPath('scratch')">▶ スクラッチ フロー</div>
+        <div class="proto-nav-link" style="background:#C5963A;" onclick="runHappyPath('flip')">▶ フリップ フロー</div>
+        <div class="proto-nav-link" style="background:#666;" onclick="resetAll()">↺ リセット</div>
+      </div>
+    </div>
+
+  </div>
+</nav>
+
+<script>
+  // ===== STATE =====
+  let currentScreen = 'screen-landing';
+  let currentSeason = 'scratch';
+  let scratchDone = false;
+
+  // ===== SCREEN NAVIGATION =====
+  function navigateTo(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById(screenId);
+    if (target) {
+      target.classList.add('active');
+      currentScreen = screenId;
+
+      if (screenId === 'screen-scratch-result') spawnConfetti('confettiScratch');
+      if (screenId === 'screen-flip-result-win') spawnConfetti('confettiFlip');
+      if (screenId === 'screen-scratch-streak-bonus') spawnConfetti('confettiStreak');
+      if (screenId === 'screen-game-flip') resetFlipCards();
+      if (screenId === 'screen-scratch-main') resetScratchCard();
+    }
+  }
+
+  // ===== SEASON SWITCH =====
+  function switchSeason(season) {
+    currentSeason = season;
+    document.getElementById('seasonScratch').classList.toggle('active', season === 'scratch');
+    document.getElementById('seasonFlip').classList.toggle('active', season === 'flip');
+
+    // Toggle which banner is visible on home screen
+    const scratchBanner = document.getElementById('gameBannerScratch');
+    const flipBanner = document.getElementById('gameBannerFlip');
+    if (scratchBanner) scratchBanner.style.display = season === 'scratch' ? '' : 'none';
+    if (flipBanner) flipBanner.style.display = season === 'flip' ? '' : 'none';
+
+    navigateTo('screen-landing');
+  }
+
+  // ===== NAV TOGGLE =====
+  function toggleNav() {
+    const body = document.getElementById('navBody');
+    const arrow = document.getElementById('navArrow');
+    body.classList.toggle('open');
+    arrow.textContent = body.classList.contains('open') ? '▼' : '▲';
+  }
+
+  // ===== SCRATCH CARD (Canvas-based real scratching) =====
+  function initScratchCanvas() {
+    const canvas = document.getElementById('scratchCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+    let isDrawing = false;
+    scratchDone = false;
+
+    // Draw the scratch surface
+    drawScratchSurface(ctx, W, H);
+
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = W / rect.width;
+      const scaleY = H / rect.height;
+      if (e.touches) {
+        return { x: (e.touches[0].clientX - rect.left) * scaleX, y: (e.touches[0].clientY - rect.top) * scaleY };
+      }
+      return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+    }
+
+    function scratch(pos) {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, 22, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Also draw connecting line for smooth strokes
+      ctx.lineWidth = 44;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    }
+
+    function checkProgress() {
+      if (scratchDone) return;
+      const imageData = ctx.getImageData(0, 0, W, H);
+      const pixels = imageData.data;
+      let transparent = 0;
+      const total = pixels.length / 4;
+      for (let i = 3; i < pixels.length; i += 4) {
+        if (pixels[i] === 0) transparent++;
+      }
+      const pct = (transparent / total) * 100;
+      // Update progress bar
+      const fill = document.getElementById('scratchProgressFill');
+      if (fill) fill.style.width = Math.min(pct * 1.5, 100) + '%'; // amplify visual
+      // Threshold 50-70% => auto-complete
+      if (pct >= 55) {
+        scratchDone = true;
+        // Fade out remaining surface
+        canvas.style.transition = 'opacity 0.6s ease';
+        canvas.style.opacity = '0';
+        setTimeout(() => navigateTo('screen-scratch-result'), 800);
+      }
+    }
+
+    // Mouse events
+    canvas.addEventListener('mousedown', (e) => {
+      if (scratchDone) return;
+      isDrawing = true;
+      ctx.beginPath();
+      const pos = getPos(e);
+      ctx.moveTo(pos.x, pos.y);
+      scratch(pos);
+    });
+    canvas.addEventListener('mousemove', (e) => {
+      if (!isDrawing || scratchDone) return;
+      scratch(getPos(e));
+    });
+    canvas.addEventListener('mouseup', () => { isDrawing = false; ctx.beginPath(); checkProgress(); });
+    canvas.addEventListener('mouseleave', () => { isDrawing = false; ctx.beginPath(); checkProgress(); });
+
+    // Touch events
+    canvas.addEventListener('touchstart', (e) => {
+      if (scratchDone) return;
+      e.preventDefault();
+      isDrawing = true;
+      ctx.beginPath();
+      const pos = getPos(e);
+      ctx.moveTo(pos.x, pos.y);
+      scratch(pos);
+    }, { passive: false });
+    canvas.addEventListener('touchmove', (e) => {
+      if (!isDrawing || scratchDone) return;
+      e.preventDefault();
+      scratch(getPos(e));
+    }, { passive: false });
+    canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      isDrawing = false; ctx.beginPath(); checkProgress();
+    }, { passive: false });
+  }
+
+  function drawScratchSurface(ctx, W, H) {
+    // Gradient background
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, '#C41E3A');
+    grad.addColorStop(1, '#9B1830');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Diagonal stripe pattern
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    for (let i = -H; i < W + H; i += 20) {
+      ctx.beginPath();
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i + H, H);
+      ctx.stroke();
+    }
+
+    // Center icon
+    ctx.font = '48px serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'white';
+    ctx.fillText('🎴', W / 2, H / 2 - 10);
+
+    // Text
+    ctx.font = 'bold 18px "Hiragino Kaku Gothic ProN", sans-serif';
+    ctx.fillStyle = 'white';
+    ctx.fillText('スクラッチ', W / 2, H / 2 + 30);
+
+    // Hint
+    ctx.font = '14px "Hiragino Kaku Gothic ProN", sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fillText('↕ ここをスクラッチ ↕', W / 2, H / 2 + 55);
+
+    // Reset composite
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  let scratchInited = false;
+  function resetScratchCard() {
+    scratchDone = false;
+    const canvas = document.getElementById('scratchCanvas');
+    const fill = document.getElementById('scratchProgressFill');
+    if (canvas) {
+      canvas.style.transition = 'none';
+      canvas.style.opacity = '1';
+      const ctx = canvas.getContext('2d');
+      ctx.globalCompositeOperation = 'source-over';
+      drawScratchSurface(ctx, canvas.width, canvas.height);
+    }
+    if (fill) fill.style.width = '0%';
+    if (!scratchInited) {
+      initScratchCanvas();
+      scratchInited = true;
+    }
+  }
+
+  // ===== FLIP CARDS =====
+  let flipLocked = false;
+
+  function handleFlip(card, isWin) {
+    if (flipLocked) return;
+    flipLocked = true;
+    card.classList.add('flipped');
+    setTimeout(() => {
+      document.querySelectorAll('.flip-card').forEach(c => {
+        if (c !== card) c.classList.add('dimmed');
+      });
+    }, 400);
+    setTimeout(() => {
+      navigateTo(isWin ? 'screen-flip-result-win' : 'screen-flip-result-lose');
+    }, 1500);
+  }
+
+  function resetFlipCards() {
+    flipLocked = false;
+    document.querySelectorAll('.flip-card').forEach(c => c.classList.remove('flipped', 'dimmed'));
+  }
+
+  // ===== CONFETTI =====
+  function spawnConfetti(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+    const colors = ['#C41E3A', '#E8B86D', '#4A9B6E', '#FFD700', '#FF69B4', '#FF6347'];
+    for (let i = 0; i < 40; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = Math.random() * 100 + '%';
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.animationDelay = Math.random() * 1 + 's';
+      c.style.animationDuration = (1.5 + Math.random() * 1.5) + 's';
+      c.style.width = (6 + Math.random() * 8) + 'px';
+      c.style.height = (6 + Math.random() * 8) + 'px';
+      container.appendChild(c);
+    }
+  }
+
+  // ===== HAPPY PATH =====
+  async function runHappyPath(game) {
+    const scratchSteps = [
+      { screen: 'screen-landing', delay: 2000 },
+      { screen: 'screen-auth-loading', delay: 1200 },
+      { screen: 'screen-session-loading', delay: 1200 },
+      { screen: 'screen-scratch-main', delay: 2500 },
+      { screen: 'screen-scratch-result', delay: 3000 },
+      { screen: 'screen-reward-loading', delay: 1500 },
+      { screen: 'screen-coupon-delivery', delay: 2000 },
+    ];
+    const flipSteps = [
+      { screen: 'screen-landing', delay: 2000 },
+      { screen: 'screen-auth-loading', delay: 1200 },
+      { screen: 'screen-session-loading', delay: 1200 },
+      { screen: 'screen-game-flip', delay: 2500 },
+      { screen: 'screen-flip-result-win', delay: 3000 },
+      { screen: 'screen-reward-loading', delay: 1500 },
+      { screen: 'screen-coupon-delivery', delay: 2000 },
+    ];
+    const steps = game === 'scratch' ? scratchSteps : flipSteps;
+    for (const step of steps) {
+      navigateTo(step.screen);
+      await new Promise(r => setTimeout(r, step.delay));
+    }
+  }
+
+  function resetAll() {
+    resetFlipCards();
+    resetScratchCard();
+    navigateTo('screen-landing');
+  }
+
+  // Auto-open nav + init scratch canvas
+  document.addEventListener('DOMContentLoaded', () => {
+    toggleNav();
+    // Pre-draw scratch canvas so it's ready when user navigates to it
+    const canvas = document.getElementById('scratchCanvas');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      drawScratchSurface(ctx, canvas.width, canvas.height);
+    }
+  });
+</script>
+
+</body>
+</html>
