@@ -1,0 +1,58 @@
+@use "sass:map";
+@use "../base/mixins";
+@use "../base/variables";
+
+.header {
+  @include mixins.pxRem(padding, 12 0);
+  background-color: map.get(variables.$color, white);
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+  height: map.get(variables.$layout, header-height);
+  &.basic-header {
+    @include mixins.pxRem(
+      height,
+      map.get(variables.$layout, header-basic-height)
+    );
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: static;
+    .logo {
+      @include mixins.pxRem(height, 70);
+      display: block;
+    }
+  }
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 100%;
+  }
+  .navbar-brand {
+    @include mixins.pxRem(width, 150);
+    display: block;
+  }
+  .navbar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    .nav-item {
+      @include mixins.pxRem(margin-left, 8);
+    }
+    .nav-link {
+      @include mixins.pxRem(padding, 8 12);
+      display: block;
+      font-weight: 500;
+      &.nav-link-active {
+        color: map.get(variables.$color, primary);
+        font-weight: 600;
+      }
+      &.btn-primary:hover {
+        background-color: map.get(variables.$color, primary);
+        color: map.get(variables.$color, white);
+      }
+    }
+  }
+}

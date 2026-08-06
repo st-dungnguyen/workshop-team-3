@@ -1,0 +1,51 @@
+@use "../base/mixins";
+@use "../base/variables";
+
+// Padding
+@each $size in variables.$size-list {
+  .pd-#{$size} {
+    @include mixins.pxRem(padding, variables.$space-value * $size);
+  }
+  .px-#{$size} {
+    @include mixins.pxRem(padding, 0 variables.$space-value * $size);
+  }
+  .py-#{$size} {
+    @include mixins.pxRem(padding, variables.$space-value * $size 0);
+  }
+  .pl-#{$size} {
+    @include mixins.pxRem(padding-left, variables.$space-value * $size);
+  }
+  .pr-#{$size} {
+    @include mixins.pxRem(padding-right, variables.$space-value * $size);
+  }
+  .pt-#{$size} {
+    @include mixins.pxRem(padding-top, variables.$space-value * $size);
+  }
+  .pb-#{$size} {
+    @include mixins.pxRem(padding-bottom, variables.$space-value * $size);
+  }
+  .mg-#{$size} {
+    @include mixins.pxRem(margin, variables.$space-value * $size);
+  }
+  .mx-#{$size} {
+    @include mixins.pxRem(margin, 0 variables.$space-value * $size);
+  }
+  .my-#{$size} {
+    @include mixins.pxRem(margin, variables.$space-value * $size 0);
+  }
+  .mt-#{$size} {
+    @include mixins.pxRem(margin-top, variables.$space-value * $size);
+  }
+  .ml-#{$size} {
+    @include mixins.pxRem(margin-left, variables.$space-value * $size);
+  }
+  .mb-#{$size} {
+    @include mixins.pxRem(margin-bottom, variables.$space-value * $size);
+  }
+  .mr-#{$size} {
+    @include mixins.pxRem(margin-right, variables.$space-value * $size);
+  }
+  .mr-#{$size}-i {
+    @include mixins.pxRem(margin-right, variables.$space-value * $size);
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "hello": "Hello",
+  "header": {
+    "home": "Home",
+    "articles": "Articles",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout"
+  },
+  "error": {
+    "network": "Network error. Please try again.",
+    "server": "Server error. Please try again later.",
+    "unknown": "An unexpected error occurred."
+  }
+}

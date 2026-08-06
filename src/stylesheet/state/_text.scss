@@ -1,0 +1,58 @@
+@use "sass:map";
+@use "../base/variables" as vars;
+@use "../base/mixins" as mixins;
+
+.txt-prewarp {
+  white-space: pre-wrap;
+}
+.txt-left {
+  text-align: left;
+}
+.txt-right {
+  text-align: right;
+}
+.txt-center {
+  text-align: center;
+}
+.no-wrap {
+  white-space: nowrap;
+}
+.txt-bold {
+  font-weight: 700;
+}
+.txt-demi {
+  font-weight: 600;
+}
+.txt-uppercase {
+  text-transform: uppercase;
+}
+.txt-capitalize {
+  text-transform: capitalize;
+}
+.txt-link {
+  @include mixins.pxRem(padding-bottom, 2);
+  color: map.get(vars.$color, primary);
+  position: relative;
+  font-weight: normal;
+  &:after {
+    content: "";
+    height: 1px;
+    width: 0;
+    background: map.get(vars.$color, primary);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+  }
+  &:hover {
+    &:after {
+      transition: width 0.3s ease;
+      width: 100%;
+    }
+  }
+  &.txt-link-error {
+    color: map.get(vars.$color, danger);
+    &::after {
+      background: map.get(vars.$color, danger);
+    }
+  }
+}

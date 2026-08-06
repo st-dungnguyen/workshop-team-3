@@ -1,0 +1,54 @@
+@use "sass:map";
+@use "../base/variables" as vars;
+@use "../base/mixins" as mixins;
+
+@keyframes bounce-delay {
+  0%,
+  80%,
+  100% {
+    -webkit-transform: scale(0);
+    transform: scale(0);
+  }
+  40% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+  }
+}
+
+.spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  .bounce {
+    @include mixins.animation(bounce-delay 1.4s infinite ease-in-out both);
+    @include mixins.pxRem(margin-left, 5);
+    border-radius: 50%;
+    background: rgba(map.get(vars.$color, white), 0.8);
+    &:first-child {
+      @include mixins.animation-delay(-0.32s);
+    }
+
+    &:nth-child(2) {
+      @include mixins.animation-delay(-0.16s);
+    }
+  }
+
+  &-lg > .bounce {
+    @include mixins.pxRem(width, 20);
+    @include mixins.pxRem(height, 20);
+  }
+
+  &-md > .bounce {
+    @include mixins.pxRem(width, 10);
+    @include mixins.pxRem(height, 10);
+  }
+
+  &-sm > .bounce {
+    @include mixins.pxRem(width, 5);
+    @include mixins.pxRem(height, 5);
+  }
+
+  &-primary > .bounce {
+    background: map.get(vars.$color, primary);
+  }
+}

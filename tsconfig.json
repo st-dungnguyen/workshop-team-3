@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "sourceMap": true,
+    "target": "es5",
+    "jsx": "react",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "declaration": false,
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": false,
+    "noImplicitReturns": false,
+    "removeComments": true,
+    "strictNullChecks": false,
+    "skipLibCheck": true,
+    "outDir": "build",
+    "paths": {
+      "@app/*": ["src/app/*"],
+      "@core/*": ["src/app/core/*"],
+      "@shared/*": ["src/app/shared/*"],
+      "@config/*": ["src/config/*"]
+    },
+    "lib": ["es6", "es7", "dom"],
+    "types": ["vite-plugin-svgr/client", "node"]
+  },
+  "include": ["./src/**/*"],
+  "exclude": ["dist", "build", "node_modules"]
+}

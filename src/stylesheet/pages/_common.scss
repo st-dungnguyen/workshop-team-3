@@ -1,0 +1,12 @@
+@use "sass:map";
+@use "../base/variables";
+@use "../base/mixins";
+
+.pages-container {
+  display: flex;
+  flex-direction: column;
+  margin: auto;
+  align-items: center;
+  min-height: calc(100vh - map.get(variables.$layout, footer-height));
+  padding-top: calc(map.get(variables.$layout, header-height) + 10px);
+}

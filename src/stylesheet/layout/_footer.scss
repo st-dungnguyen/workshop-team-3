@@ -1,0 +1,39 @@
+@use "sass:map";
+@use "../base/variables";
+@use "../base/mixins";
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: map.get(variables.$layout, footer-height);
+  font-weight: 600;
+  &.basic-footer {
+    @include mixins.pxRem(padding, 0 20);
+    @include mixins.pxRem(
+      height,
+      map.get(variables.$layout, footer-basic-height)
+    );
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-top: 1px solid map.get(variables.$color, grey-d);
+    .menu-list {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .menu-item {
+      @include mixins.pxRem(margin, 0 12);
+      cursor: pointer;
+      &.menu-item-active,
+      &:hover {
+        color: map.get(variables.$color, primary);
+      }
+    }
+  }
+  p {
+    text-align: center;
+  }
+}

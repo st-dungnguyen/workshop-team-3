@@ -1,0 +1,67 @@
+// == Breakpoints ===
+$breakpoints: (
+  small: 480px,
+  medium: 768px,
+  wide: 960px,
+  large: 1024px,
+  largest: 1280px,
+  super-largest: 1441px,
+);
+
+$color: (
+  primary: #2272c7,
+  danger: #e61e56,
+  danger-msg: #a83232,
+  bg-danger: #ffdbdc,
+  warning: #ffb000,
+  success: #00c853,
+  orange-a: #f88c1a,
+  orange-b: #ff5b00,
+  slate-grey-a: #1a1d21,
+  state-grey-b: #666666,
+  state-grey-c: #ebeaeb,
+  grey-a: #f3f3f3,
+  grey-b: #888888,
+  grey-c: #dee2e6,
+  grey-d: #c9d1d6,
+  blue-a: #0060a7,
+  blue-b: #007bff,
+  blue-c: #008cf4,
+  black: #000000,
+  white: #ffffff,
+);
+
+$font-size: (
+  xs: 11px,
+  sm: 13px,
+  normal: 16px,
+  lg: 18px,
+  xl: 20px,
+  xxl: 24px,
+  xxxl: 30px,
+);
+
+$layout: (
+  header-height: 85px,
+  footer-height: 40px,
+  header-basic-height: 90px,
+  footer-basic-height: 45px,
+  header-basic-padding: 30px,
+);
+
+$container-breakpoints: (
+  medium: 440,
+  wide: 588,
+  large: 840,
+);
+
+$border-radius: (
+  sm: 4px,
+  md: 5px,
+);
+
+$font-body: "Mulish", sans-serif;
+$font-japan: serif;
+
+$space-value: 5;
+$size-list: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10;

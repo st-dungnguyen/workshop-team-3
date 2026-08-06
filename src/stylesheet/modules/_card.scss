@@ -1,0 +1,42 @@
+@use "sass:map";
+@use "../base/mixins";
+@use "../base/variables";
+
+.card {
+  @include mixins.pxRem(margin-bottom, 20);
+  border-radius: map.get(variables.$border-radius, sm);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex: 1;
+  &-body {
+    @include mixins.pxRem(padding, 20);
+    @include mixins.pxRem(gap, 12);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  &-title {
+    @include mixins.pxRem(font-size, 20);
+    @include mixins.ellipsis-special(2);
+    @include mixins.pxRem(min-height, 64);
+    margin-bottom: 0;
+  }
+  &-text {
+    @include mixins.ellipsis-special(3);
+  }
+  &-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    &-item {
+      display: flex;
+      align-items: center;
+    }
+    &-icon {
+      @include mixins.pxRem(margin-right, 5);
+      @include mixins.pxRem(width, 16);
+      @include mixins.pxRem(height, 16);
+    }
+  }
+}

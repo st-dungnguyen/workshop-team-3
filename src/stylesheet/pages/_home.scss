@@ -1,0 +1,28 @@
+@use "sass:map";
+@use "../base/mixins";
+@use "../base/variables";
+
+.home-page {
+  .page-inner {
+    @include mixins.pxRem(width, 650);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .logo {
+    @include mixins.pxRem(height, 80);
+    @include mixins.pxRem(width, 80);
+    @include mixins.pxRem(margin-bottom, 36);
+    will-change: filter;
+    transition: filter 300ms;
+  }
+  h1 {
+    @include mixins.pxRem(font-size, 36);
+    @include mixins.pxRem(margin-bottom, 24);
+    font-weight: 600;
+  }
+  .desc {
+    @include mixins.pxRem(font-size, 24);
+  }
+}
