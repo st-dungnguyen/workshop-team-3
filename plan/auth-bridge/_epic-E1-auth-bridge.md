@@ -67,21 +67,21 @@ interface AuthContextType {
 }
 ```
 
-The context **never writes to `localStorage`**. Token lives in React state for the session lifetime only. On page reload, `authStatus` resets to `'idle'` and the bridge flow restarts.
+Token lives in React state (`AuthContext.token`) during the session. After successful validation, the token is also persisted to `localStorage` (`access_token` key) so subsequent WebView page loads can re-validate without the mobile app re-injecting the token. On validation failure from localStorage, the stored token is cleared automatically.
 
 ---
 
-## 4. Token Reception — Priority & Race Conditions
+## 4. Token Resolution — Priority Order
 
-Both channels run concurrently from mount. The rule is **first valid non-empty token wins**:
+Token sources are checked in strict priority order:
 
-1. On mount: check `window.location.search` for `?token=`. If found and non-empty → pass to validation immediately.
-2. Simultaneously: register `window.addEventListener('message', ...)` for JS bridge messages.
-3. If URL param delivers a token first → ignore any subsequent bridge message.
-4. If no URL param → bridge listener stays active and delivers the token when it arrives.
-5. A **5-second timeout** runs from mount. If neither channel delivers a token by then → show `tokenMissing` error.
+1. **URL param** (`?accessToken=`): checked synchronously on mount. If present and non-empty → validate immediately, overwrite any localStorage token.
+2. **Retry path**: if a previous validation attempt stored a `pendingToken` and it did not come from localStorage, re-validate it (for server error retries).
+3. **localStorage** (`access_token` key): if no URL param and no pending retry — check localStorage. If found → submit for re-validation. On failure, clear localStorage and fall through to JS bridge.
+4. **JS bridge** (`window.addEventListener('message', ...)`): active until a token arrives or the 5-second timeout fires.
+5. **Timeout**: if nothing arrives within 5 s → show `tokenMissing` error.
 
-The "first wins" lock is a simple boolean ref (`tokenReceivedRef`) inside `useAuthBridge`.
+The "first wins" lock is a `tokenReceivedRef` boolean inside `useAuthBridge`. After successful validation, the token is saved to localStorage via `authBridgeService.saveToStorage(token)`.
 
 ---
 
@@ -110,9 +110,9 @@ For the demo build, real backend validation is bypassed. This keeps all auth gat
 
 **Behavior when `VITE_DEMO_MODE=true`:**
 - `AuthBridgeService.validate()` skips the API call and resolves immediately with a success payload.
-- Any non-empty token is accepted (use `?token=demo` in the browser URL to trigger the happy path).
+- Any non-empty token is accepted (use `?accessToken=demo` in the browser URL to trigger the happy path).
 - The `AuthGate` loading screen still appears briefly (realistic UX), then transitions to the game.
-- All error screens remain accessible by appending `?token=` (empty) to trigger `tokenMissing`.
+- All error screens remain accessible by appending `?accessToken=` (empty) to trigger `tokenMissing`.
 
 **Implementation:**
 ```typescript

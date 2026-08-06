@@ -55,10 +55,16 @@ A custom layer sits on top of `react-router-dom` — always check `core/modules/
 
 The WebView never shows a login screen. The mobile app passes an auth token via one of two channels — both must be supported:
 
-1. **URL query param**: mobile opens `<webview-url>?token=<jwt>` — read on mount from `window.location.search`.
+1. **URL query param**: mobile opens `<webview-url>?accessToken=<jwt>` — read on mount from `window.location.search`.
 2. **JS Bridge**: mobile calls `window.ReactNativeWebView.postMessage` (or equivalent) with `{ type: 'AUTH_TOKEN', token: '<jwt>' }` — listen via `window.addEventListener('message', ...)`.
 
-Token validation happens on the backend. Until a valid token is confirmed, the game must not be accessible. Store the resolved token in `AuthContext`; never persist it to `localStorage`.
+Token resolution priority (highest to lowest):
+1. URL param `?accessToken=` — always wins, overwrites any stored token.
+2. Retry path — re-validates the previously received token (unless it came from localStorage and already failed).
+3. `localStorage` (`access_token` key) — used on subsequent WebView page loads without a URL param; cleared automatically on expiry or invalid response.
+4. JS Bridge — active listener until token arrives or 5 s timeout (`tokenMissing` error).
+
+After a token is validated, it is saved to `localStorage` (`access_token` key) so navigating to other WebView URLs does not require the mobile app to re-pass the token. Expired or invalid stored tokens are cleared on validation failure so the bridge / timeout path can take over.
 
 ## External API & AppLink Integration
 

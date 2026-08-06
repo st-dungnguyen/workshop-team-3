@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { environment } from '@config/environment';
 import { ENDPOINT } from '@config/endpoint';
-import type { PlayResult } from '@app/shared/models/game';
+import type { EligibilityResult, PlayResult } from '@app/shared/models/game';
 
 const MOCK_COUPON_END_DATE = (() => {
   const d = new Date();
@@ -12,12 +12,23 @@ const MOCK_COUPON_END_DATE = (() => {
 export class GameService {
   private readonly http = axios.create({
     baseURL: environment.apiBaseUrl,
-    headers: {
-      'Content-Type': 'application/json',
-      'x-skylark-token': environment.skylarkToken,
-      'x-client-version': environment.clientVersion,
-    },
+    headers: { 'Content-Type': 'application/json' },
   });
+
+  async checkEligibility(token: string): Promise<EligibilityResult> {
+    if (import.meta.env.VITE_DEMO_MODE === 'true') {
+      await new Promise<void>((r) => setTimeout(r, 500));
+      return { eligible: true, nextPlayAt: null };
+    }
+
+    const response = await this.http.get<EligibilityResult>(
+      ENDPOINT.game.eligibility,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  }
 
   async play(campaignId: string, token: string): Promise<PlayResult> {
     if (import.meta.env.VITE_DEMO_MODE === 'true') {

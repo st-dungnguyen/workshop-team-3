@@ -10,6 +10,7 @@ export const ENDPOINT = {
     validate: `${RESOURCES.auth}/validate`,
   },
   game: {
+    eligibility: `${RESOURCES.game}/eligibility`,
     play: `${RESOURCES.game}/play`,
   },
 };

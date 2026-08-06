@@ -2,6 +2,7 @@ import axios, { AxiosError } from 'axios';
 import { environment } from '@config/environment';
 import { ENDPOINT } from '@config/endpoint';
 import type { AuthErrorCode, ValidateResult } from '@shared/models/auth';
+import { KEYS, getLS, setLS, removeLS } from '@core/helpers/storage.helper';
 
 interface BridgePayload {
   type: string;
@@ -20,7 +21,7 @@ export class AuthBridgeService {
 
   extractFromUrlParam(): string | null {
     const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
+    const token = params.get('accessToken');
     return token && token.trim().length > 0 ? token : null;
   }
 
@@ -61,6 +62,18 @@ export class AuthBridgeService {
       { headers: { Authorization: `Bearer ${token}` } },
     );
     return response.data;
+  }
+
+  saveToStorage(token: string): void {
+    setLS(KEYS.ACCESS_TOKEN, token);
+  }
+
+  loadFromStorage(): string | null {
+    return getLS(KEYS.ACCESS_TOKEN);
+  }
+
+  clearFromStorage(): void {
+    removeLS(KEYS.ACCESS_TOKEN);
   }
 
   mapErrorToCode(error: unknown): AuthErrorCode {

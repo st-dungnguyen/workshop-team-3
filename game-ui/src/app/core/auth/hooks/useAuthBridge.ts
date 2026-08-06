@@ -12,13 +12,18 @@ const useAuthBridge = () => {
   const pendingTokenRef = useRef<string | null>(null);
 
   const handleValidate = useCallback(
-    async (token: string) => {
+    async (token: string, fromStorage = false) => {
       pendingTokenRef.current = token;
       setLoading();
       try {
         await authBridgeService.validate(token);
+        authBridgeService.saveToStorage(token);
         setTokenValidated(token);
       } catch (error) {
+        if (fromStorage) {
+          authBridgeService.clearFromStorage();
+          pendingTokenRef.current = null;
+        }
         setAuthError(authBridgeService.mapErrorToCode(error));
       }
     },
@@ -28,7 +33,7 @@ const useAuthBridge = () => {
   useEffect(() => {
     tokenReceivedRef.current = false;
 
-    // 1. URL param — synchronous, runs first
+    // 1. URL param — highest priority, overwrites storage
     const urlToken = authBridgeService.extractFromUrlParam();
     if (urlToken) {
       tokenReceivedRef.current = true;
@@ -43,7 +48,15 @@ const useAuthBridge = () => {
       return;
     }
 
-    // 3. JS bridge listener — stays active until token arrives or unmount
+    // 3. localStorage — for subsequent WebView page loads without URL param
+    const storedToken = authBridgeService.loadFromStorage();
+    if (storedToken) {
+      tokenReceivedRef.current = true;
+      handleValidate(storedToken, true);
+      return;
+    }
+
+    // 4. JS bridge — wait for mobile app to push token
     const handleMessage = (event: MessageEvent) => {
       if (tokenReceivedRef.current) return;
       const bridgeToken = authBridgeService.extractFromBridgeMessage(event);
@@ -54,7 +67,7 @@ const useAuthBridge = () => {
     };
     window.addEventListener('message', handleMessage);
 
-    // 4. Timeout — show tokenMissing if neither channel delivers within 5s
+    // 5. Timeout — tokenMissing if nothing arrives within 5s
     const timeout = setTimeout(() => {
       if (!tokenReceivedRef.current) {
         setAuthError('tokenMissing');

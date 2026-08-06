@@ -19,20 +19,22 @@ E1 establishes the trust boundary between the native mobile app and the WebView.
 
 ### In Scope
 
-- Receiving a JWT token delivered by the native app via URL query param (`?token=`)
+- Receiving a JWT token delivered by the native app via URL query param (`?accessToken=`)
 - Receiving a JWT token delivered by the native app via JS bridge message
 - Validating the received token with the backend before granting game access
 - Blocking all game screens behind an auth gate until a valid token is confirmed
 - Displaying localized loading, error, and recovery states for every auth failure mode
-- Holding the validated token in-memory for the duration of the WebView session
+- Holding the validated token in `AuthContext` for the duration of the session
+- Persisting the validated token to `localStorage` so navigating to other WebView pages does not require the mobile app to re-inject the token
+- Reading a previously validated token from `localStorage` on subsequent page loads (URL param and JS bridge take priority)
 
 ### Out of Scope
 
 - User login, registration, or password reset (owned entirely by the native app)
-- Token refresh or re-authentication within an active session — if the token expires mid-session, the player must re-open the WebView from the native app
-- Persisting the token across sessions or page reloads
+- Token refresh or silent re-authentication within an active session — if the token expires mid-session, the player must re-open the WebView from the native app
+- Persisting the token across browser sessions beyond what localStorage naturally provides
 - Role-based access control — all players share the same permission level
-- Handling tokens delivered by any channel other than URL param or JS bridge
+- Handling tokens delivered by any channel other than URL param, JS bridge, or localStorage
 
 ## 3. User Personas
 
@@ -53,8 +55,9 @@ E1 establishes the trust boundary between the native mobile app and the WebView.
 ## 5. Key Business Rules
 
 - A player must never reach any game screen without a validated token. The auth gate is absolute — no bypass, no grace period.
-- The WebView must support **both** delivery channels (URL param and JS bridge) because different native app versions or platforms may use different mechanisms. The first valid token received from either channel is accepted.
-- The token is session-scoped only. It must not be written to any persistent storage.
+- The WebView must support all three token sources (URL param `?accessToken=`, JS bridge, localStorage) because different native app versions may use different mechanisms, and subsequent WebView pages cannot rely on the mobile app re-injecting the token.
+- Token resolution priority: URL param (`?accessToken=`) → retry path → localStorage → JS bridge. URL param always overwrites localStorage.
+- After successful validation, the token must be persisted to localStorage (`access_token` key) so cross-URL navigation within the WebView does not require a new injection from the mobile app.
 - All error states must display localized text in `ja` (primary) and `en` (secondary).
 
 ## 6. Technical Context

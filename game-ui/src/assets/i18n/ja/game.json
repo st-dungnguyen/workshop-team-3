@@ -14,7 +14,14 @@
   },
   "alreadyPlayed": {
     "title": "本日はすでにプレイ済みです",
-    "body": "また明日チャレンジしてね！"
+    "comeBackSoon": "また明日チャレンジしてね！",
+    "nextPlayAt": "{{date}} からまた遊べます！",
+    "returnToApp": "アプリに戻る"
+  },
+  "sessionCheckError": {
+    "title": "少しだけお待ちください",
+    "body": "読み込みに失敗しました。もう一度お試しください。",
+    "retry": "もう一度試す"
   },
   "result": {
     "win": {

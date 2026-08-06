@@ -14,7 +14,14 @@
   },
   "alreadyPlayed": {
     "title": "You've already played today",
-    "body": "Come back tomorrow for another chance!"
+    "comeBackSoon": "Come back tomorrow for another chance!",
+    "nextPlayAt": "You can play again from {{date}}!",
+    "returnToApp": "Return to App"
+  },
+  "sessionCheckError": {
+    "title": "Please wait a moment",
+    "body": "Failed to load. Please try again.",
+    "retry": "Try again"
   },
   "result": {
     "win": {

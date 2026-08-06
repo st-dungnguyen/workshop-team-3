@@ -29,6 +29,11 @@ export interface PlayResult {
   coupon?: CouponInfo; // present when outcome === 'win'
 }
 
+export interface EligibilityResult {
+  eligible: boolean;
+  nextPlayAt: string | null;
+}
+
 export interface GameConfig {
   activeVariant: GameVariant;
   campaignId: string;

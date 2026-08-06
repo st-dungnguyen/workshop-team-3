@@ -62,14 +62,15 @@ const WinResult = ({ coupon }: WinResultProps) => {
     if (ctaState === 'loading') return;
     setCtaState('loading');
     try {
-      if (coupon) {
-        if (intent === 'useNow') {
-          navigate(
-            `${COUPON_BASE_URL}/app/main?to=to_site&coupon_id=${coupon.id}`,
-          );
-        } else {
-          navigate(`${COUPON_BASE_URL}/app/coupon/segment?id=${coupon.id}`);
-        }
+      if (!coupon || !coupon.id) {
+        setCtaState('error');
+        return;
+      }
+      const encodedId = encodeURIComponent(coupon.id);
+      if (intent === 'useNow') {
+        navigate(`${COUPON_BASE_URL}/app/takeout?coupon_id=${encodedId}`);
+      } else {
+        navigate(`${COUPON_BASE_URL}/app/coupon/segment?id=${encodedId}`);
       }
     } catch {
       setCtaState('error');
