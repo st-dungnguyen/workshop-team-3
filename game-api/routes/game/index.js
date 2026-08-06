@@ -6,8 +6,8 @@ const { createDrawsService } = require('../../services/draws.service')
 const { createCampaignService } = require('../../services/campaign.service')
 
 module.exports = async function (fastify, opts) {
-  const couponService = new CouponService(fastify.config)
-  const { hasPlayedToday, getNextPlayAt, recordPlay } = createDrawsService(fastify.knex)
+  const couponService = new CouponService(fastify.config, fastify.log)
+  const { hasPlayedToday, getNextPlayAt, recordPlay, getWinSession, markClaimed } = createDrawsService(fastify.knex)
   const { getActiveConfig, getRandomCoupon } = createCampaignService(fastify.knex)
 
   async function resolveUser(request, reply) {
@@ -139,28 +139,72 @@ module.exports = async function (fastify, opts) {
       return reply.code(500).send({ code: 'systemError', message: 'No coupons available' })
     }
 
+    await recordPlay(user.userId, { outcome: 'win', couponId: selectedCoupon.coupon_id })
+
+    return {
+      outcome: 'win',
+      coupon: {
+        id: selectedCoupon.coupon_id,
+        title: selectedCoupon.title,
+        discount: selectedCoupon.discount,
+        endDate: selectedCoupon.end_date,
+      },
+    }
+  })
+
+  // ── POST /game/claim ──────────────────────────────────────────────────────────
+
+  fastify.post('/claim', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['couponId'],
+        properties: { couponId: { type: 'string', minLength: 1 } },
+      },
+      response: {
+        200: { type: 'object', properties: { ok: { type: 'boolean' } } },
+      },
+    },
+  }, async function (request, reply) {
+    const user = await resolveUser(request, reply)
+    if (!user) return
+
+    const { couponId } = request.body
+
+    const session = await getWinSession(user.userId)
+    if (!session) {
+      return reply.code(404).send({ code: 'NO_WIN_SESSION', message: 'No winning session found for today' })
+    }
+    if (session.coupon_id !== couponId) {
+      return reply.code(409).send({ code: 'COUPON_MISMATCH', message: 'couponId does not match session' })
+    }
+
+    // Idempotent: already claimed
+    if (session.claimed_at) {
+      return { ok: true }
+    }
+
+    const couponRow = await fastify.knex('campaign_coupons').where({ coupon_id: couponId }).first()
+
     try {
-      const issuedCouponId = await couponService.issueCoupon({
+      await couponService.issueCoupon({
         userId: user.userId,
         token: user.token,
-        coupon: selectedCoupon,
+        coupon: couponRow ?? { coupon_id: couponId, start_date: new Date().toISOString(), end_date: new Date().toISOString() },
       })
-      await recordPlay(user.userId, { outcome: 'win', couponId: issuedCouponId })
-
-      return {
-        outcome: 'win',
-        coupon: {
-          id: issuedCouponId,
-          title: selectedCoupon.title,
-          discount: selectedCoupon.discount,
-          endDate: selectedCoupon.end_date,
-        },
-      }
+      await markClaimed(session.id)
+      return { ok: true }
     } catch (err) {
-      request.log.error({ err: err.message, status: err.response?.status }, 'Coupon API error')
+      request.log.error(
+        { err: err.message, status: err.response?.status, body: err.response?.data },
+        'Coupon API error in claim',
+      )
 
       if (err.response?.status === 401) {
         return reply.code(401).send({ code: 'unauthorized' })
+      }
+      if (err.response?.status === 403) {
+        return reply.code(403).send({ code: 'forbidden', message: 'Coupon API rejected the request' })
       }
       if (err.response?.status === 503) {
         return reply.code(503).send({ code: 'maintenance' })

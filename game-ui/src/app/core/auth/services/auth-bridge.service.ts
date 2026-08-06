@@ -51,9 +51,8 @@ export class AuthBridgeService {
   }
 
   async validate(token: string): Promise<ValidateResult> {
-    if (import.meta.env.VITE_DEMO_MODE === 'true') {
-      await new Promise<void>((r) => setTimeout(r, 800));
-      return { success: true, userId: 'demo-user' };
+    if (environment.isLocal) {
+      return { success: true, userId: 'local-dev-user' };
     }
 
     const response = await this.http.post<ValidateResult>(

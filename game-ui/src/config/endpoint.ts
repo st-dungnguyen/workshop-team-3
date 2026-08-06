@@ -13,5 +13,6 @@ export const ENDPOINT = {
     config: `${RESOURCES.game}/config`,
     eligibility: `${RESOURCES.game}/eligibility`,
     play: `${RESOURCES.game}/play`,
+    claim: `${RESOURCES.game}/claim`,
   },
 };

@@ -37,7 +37,8 @@
       "body": "Come back tomorrow for another chance!",
       "scratchLabel": "No luck"
     },
-    "autoClaimRedirect": "Redirecting to your coupon...",
+    "useCoupon": "Use Coupon",
+    "myCoupon": "My Coupon",
     "close": "Return to App",
     "pointsAwarded_one": "{{count}} point earned!",
     "pointsAwarded_other": "{{count}} points earned!"

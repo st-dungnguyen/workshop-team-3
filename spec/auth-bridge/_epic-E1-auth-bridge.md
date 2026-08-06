@@ -27,6 +27,7 @@ E1 establishes the trust boundary between the native mobile app and the WebView.
 - Holding the validated token in `AuthContext` for the duration of the session
 - Persisting the validated token to `localStorage` so navigating to other WebView pages does not require the mobile app to re-inject the token
 - Reading a previously validated token from `localStorage` on subsequent page loads (URL param and JS bridge take priority)
+- **Local development auth mock** (`VITE_ENV=local`): bypass URL param / JS bridge / localStorage token collection and immediately validate using a synthetic `local-dev-token`. The backend (`ENV=local`) accepts this token and returns a successful validation response. The auth gate still runs — it is not bypassed; only the token source is synthetic.
 
 ### Out of Scope
 
@@ -54,7 +55,7 @@ E1 establishes the trust boundary between the native mobile app and the WebView.
 
 ## 5. Key Business Rules
 
-- A player must never reach any game screen without a validated token. The auth gate is absolute — no bypass, no grace period.
+- A player must never reach any game screen without a validated token. The auth gate is absolute — no bypass, no grace period. The local dev mock (`VITE_ENV=local`) does not bypass the gate; it provides a synthetic token that the backend also accepts in its own local mode (`ENV=local`).
 - The WebView must support all three token sources (URL param `?accessToken=`, JS bridge, localStorage) because different native app versions may use different mechanisms, and subsequent WebView pages cannot rely on the mobile app re-injecting the token.
 - Token resolution priority: URL param (`?accessToken=`) → retry path → localStorage → JS bridge. URL param always overwrites localStorage.
 - After successful validation, the token must be persisted to localStorage (`access_token` key) so cross-URL navigation within the WebView does not require a new injection from the mobile app.

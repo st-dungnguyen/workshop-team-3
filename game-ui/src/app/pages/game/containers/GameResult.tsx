@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useRef } from 'react';
+import React, { type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CouponInfo, GameOutcome } from '@app/shared/models/game';
 
@@ -67,27 +67,18 @@ interface WinResultProps {
   points: number | null;
 }
 
-const AUTO_CLAIM_DELAY_MS = 3000;
-
 const WinResult = ({ coupon, points }: WinResultProps) => {
   const { t } = useTranslation('game');
-  const hasAutoClaimedRef = useRef(false);
 
-  const navigate = (url: string) => {
-    window.location.href = url;
+  const handleUseCoupon = () => {
+    if (!coupon?.id) return;
+    const encodedId = encodeURIComponent(coupon.id);
+    window.location.href = `${COUPON_BASE_URL}/app/coupon/detail?id=${encodedId}`;
   };
 
-  useEffect(() => {
-    if (!coupon?.id || hasAutoClaimedRef.current) return;
-    hasAutoClaimedRef.current = true;
-
-    const timer = setTimeout(() => {
-      const encodedId = encodeURIComponent(coupon.id);
-      navigate(`${COUPON_BASE_URL}/app/coupon/segment?id=${encodedId}`);
-    }, AUTO_CLAIM_DELAY_MS);
-
-    return () => clearTimeout(timer);
-  }, [coupon]);
+  const handleMyCoupon = () => {
+    window.location.href = `${COUPON_BASE_URL}/app/main?to=coupon_list`;
+  };
 
   return (
     <div className="game-result-win">
@@ -118,7 +109,20 @@ const WinResult = ({ coupon, points }: WinResultProps) => {
       {points !== null && <PointsBadge points={points} />}
 
       {coupon && (
-        <p className="game-result-win-redirect">{t('result.autoClaimRedirect')}</p>
+        <div className="game-result-cta-group">
+          <button
+            className="btn-primary game-result-cta game-result-cta-use-coupon"
+            onClick={handleUseCoupon}
+          >
+            {t('result.useCoupon')}
+          </button>
+          <button
+            className="btn-secondary game-result-cta game-result-cta-my-coupon"
+            onClick={handleMyCoupon}
+          >
+            {t('result.myCoupon')}
+          </button>
+        </div>
       )}
     </div>
   );

@@ -37,7 +37,19 @@ function createDrawsService(knex) {
     })
   }
 
-  return { hasPlayedToday, getNextPlayAt, recordPlay }
+  async function getWinSession(userId) {
+    return knex('game_sessions')
+      .where({ user_id: userId, play_date: todayUTC(), outcome: 'win' })
+      .first()
+  }
+
+  async function markClaimed(sessionId) {
+    await knex('game_sessions')
+      .where({ id: sessionId })
+      .update({ claimed_at: knex.fn.now() })
+  }
+
+  return { hasPlayedToday, getNextPlayAt, recordPlay, getWinSession, markClaimed }
 }
 
 module.exports = { createDrawsService }

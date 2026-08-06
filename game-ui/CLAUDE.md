@@ -109,6 +109,23 @@ Global SCSS only (no CSS Modules/CSS-in-JS), entry-imported as `@stylesheet/styl
 - Presentational components (`shared/components/`) take data/callbacks via props only — no fetching, no importing infra services.
 - ESLint (flat config, `eslint.config.mjs`) enforces `eslint:recommended` + `@typescript-eslint/recommended` + Prettier, with `--max-warnings 0` in CI/lint script — treat warnings as build-breaking. Prettier config: single quotes, semicolons, trailing commas, 80-col width (double quotes for `.scss`/`.css`).
 
+## Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `VITE_ENV` | Yes | Environment name: `local` \| `staging` \| `production` |
+| `VITE_API_BASE_URL` | Yes | Game API base URL (no trailing slash) |
+| `VITE_SKYLARK_BASE_URL` | No | AppLink base URL, defaults to `https://www.skylark.co.jp` |
+
+**`VITE_ENV=local` behaviour (local development only):**
+- Auth is mocked: `useAuthBridge` skips URL param / JS bridge / localStorage and immediately validates with a synthetic `local-dev-token`
+- The synthetic token is **not** persisted to localStorage, so it never bleeds into staging/production
+- All game API calls (`/game/config`, `/game/eligibility`, `/game/play`) return mock data — no running game-api required
+- `POST /game/claim` is a no-op (skipped silently)
+- Mock play result: 50% win / 50% lose at random; win returns a fixed local coupon
+
+**All other `VITE_ENV` values:** full JWT auth flow, no mocking anywhere in the frontend.
+
 ## Development Workflows
 
 - Always run `pnpm run lint` before committing code.

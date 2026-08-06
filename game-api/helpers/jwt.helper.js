@@ -33,6 +33,10 @@ async function verifyToken(token) {
   const env = process.env.ENV || 'local'
 
   if (env === 'local') {
+    return { sub: 'local-dev-user', iss: 'local' }
+  }
+
+  if (env !== 'prod') {
     const decoded = jwt.decode(token)
     if (!decoded) throw new Error('Malformed token')
     return decoded

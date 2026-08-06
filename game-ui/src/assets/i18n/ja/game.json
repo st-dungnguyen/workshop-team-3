@@ -37,7 +37,8 @@
       "body": "また明日チャレンジしてね！",
       "scratchLabel": "ハズレ"
     },
-    "autoClaimRedirect": "クーポンページへ移動中...",
+    "useCoupon": "クーポンを使う",
+    "myCoupon": "クーポンを確認する",
     "close": "アプリに戻る",
     "pointsAwarded_one": "{{count}}ポイント獲得！",
     "pointsAwarded_other": "{{count}}ポイント獲得！"

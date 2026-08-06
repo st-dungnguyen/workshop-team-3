@@ -44,12 +44,13 @@ test/             # Node native test suite
 
 ### Environment modes
 
-Two modes controlled by `ENV`:
+Three modes controlled by `ENV`:
 
 | Mode | `ENV` value | JWT verification | Coupon API | DB required |
 |---|---|---|---|---|
-| Local dev | `local` (default) | Skipped — token decoded without signature check | Mock (500 ms delay, fake coupon ID) | Required |
-| Production | `prod` | RS256 via Auth0 JWKS with 10-min cache | Real external API | Required |
+| Local dev | `local` (default) | Returns mock payload `{ sub: 'local-dev-user', iss: 'local' }` — accepts any token string including `local-dev-token` | Mock (500 ms delay, fake coupon ID) | Required |
+| Dev / staging | `dev` (or any non-`local`, non-`prod`) | Decodes token without signature or issuer check — real JWT structure required but no JWKS call | Real external API | Required |
+| Production | `prod` | RS256 via Auth0 JWKS with 10-min cache — `AUTH0_ISSUER` required | Real external API | Required |
 
 `fastify.config.isLocal` boolean is the authoritative check used inside services and helpers.
 
@@ -71,14 +72,22 @@ Two modes controlled by `ENV`:
 | GET | `/` | None | Health check — `{ root: true }` |
 | POST | `/auth/validate` | None | Validates a token; returns `{ success, userId }` |
 | GET | `/game/eligibility` | Bearer | Returns `{ eligible, nextPlayAt }` |
-| POST | `/game/play` | Bearer | Plays the game; returns `{ outcome, coupon? }` |
+| POST | `/game/play` | Bearer | Plays the game; returns `{ outcome, coupon? }` — does NOT call Coupon API |
+| POST | `/game/claim` | Bearer | Issues coupon via Coupon API for today's win; idempotent |
 
 **`POST /game/play`** flow:
 1. Extract + verify Bearer token → get `userId`
 2. Check `hasPlayedToday(userId)` → 403 if already played
-3. Roll win/lose via `WIN_PROBABILITY` (default 0.5)
-4. On win → `issueCoupon` → record `{ outcome: 'win', couponId }`; return coupon object
+3. Roll win/lose via campaign's `win_probability`
+4. On win → pick random coupon from `campaign_coupons` → record `{ outcome: 'win', couponId }`; return coupon object (Coupon API NOT called here)
 5. On lose → record `{ outcome: 'lose' }`; return `{ outcome: 'lose' }`
+
+**`POST /game/claim`** flow:
+1. Extract + verify Bearer token → get `userId`
+2. Look up today's win session for `userId` → 404 if none
+3. Verify body `couponId` matches `session.coupon_id` → 409 if mismatch
+4. If `session.claimed_at` is set → return 200 (idempotent)
+5. Fetch coupon row from `campaign_coupons` → call `issueCoupon` → update `claimed_at`
 
 ## Database Schema
 
@@ -90,7 +99,8 @@ game_sessions
   user_id     TEXT NOT NULL
   play_date   DATE NOT NULL          -- UTC YYYY-MM-DD
   outcome     VARCHAR(8) NOT NULL    -- 'win' | 'lose'
-  coupon_id   TEXT
+  coupon_id   TEXT                   -- pre-selected coupon ID (from campaign_coupons)
+  claimed_at  TIMESTAMPTZ            -- set by POST /game/claim; null = not yet issued via Coupon API
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
   INDEX: (user_id, play_date)
 ```
@@ -123,13 +133,16 @@ Error codes propagated to the frontend: 401 → Unauthorized, 503 → maintenanc
 # Required in all environments
 DATABASE_URL=          # PostgreSQL connection string
 
-# Required in non-local environments
-AUTH0_ISSUER=          # Auth0 tenant URL (trailing slash)
+# Required in prod only
+AUTH0_ISSUER=          # Auth0 tenant URL (trailing slash) — only enforced when ENV=prod
 COUPON_API_URL=        # External coupon service base URL
 X_SKYLARK_TOKEN=       # Skylark API auth token
 
+# Required in non-local (dev/prod)
+DATABASE_URL=          # PostgreSQL connection string (also required in local, listed above)
+
 # Optional (with defaults)
-ENV=local              # 'local' or 'prod'
+ENV=local              # 'local' | 'dev' | 'prod'
 CORS_ORIGIN=*          # Allowed CORS origin
 WIN_PROBABILITY=0.5    # Float 0–1
 COUPON_ID=1000000001

@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef } from 'react';
+import { environment } from '@config/environment';
 import { useAuth } from '@shared/contexts/auth.context';
 import { AuthBridgeService } from '../services/auth-bridge.service';
+
+const LOCAL_DEV_TOKEN = 'local-dev-token';
 
 const TOKEN_WAIT_MS = 5000;
 const authBridgeService = new AuthBridgeService();
@@ -17,7 +20,9 @@ const useAuthBridge = () => {
       setLoading();
       try {
         await authBridgeService.validate(token);
-        authBridgeService.saveToStorage(token);
+        if (!environment.isLocal) {
+          authBridgeService.saveToStorage(token);
+        }
         setTokenValidated(token);
       } catch (error) {
         if (fromStorage) {
@@ -32,6 +37,13 @@ const useAuthBridge = () => {
 
   useEffect(() => {
     tokenReceivedRef.current = false;
+
+    // Local env: bypass all token collection, validate immediately with a mock token
+    if (environment.isLocal) {
+      tokenReceivedRef.current = true;
+      handleValidate(LOCAL_DEV_TOKEN);
+      return;
+    }
 
     // 1. URL param — highest priority, overwrites storage
     const urlToken = authBridgeService.extractFromUrlParam();

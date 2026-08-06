@@ -43,6 +43,10 @@ const useGameSession = (campaignId: string): UseGameSessionReturn => {
       setCoupon(result.coupon ?? null);
       setPoints(result.points ?? null);
       setSessionState('revealing');
+
+      if (result.outcome === 'win' && result.coupon?.id) {
+        gameService.claimCoupon(result.coupon.id, token ?? '').catch(() => {});
+      }
     } catch (error) {
       if (
         axios.isAxiosError(error) &&
