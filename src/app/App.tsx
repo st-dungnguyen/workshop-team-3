@@ -13,6 +13,7 @@ import AppSuspense from './AppSuspense';
 import { AuthProvider } from './shared/contexts/auth.context';
 import { renderChildren } from './core/modules/custom-router-dom/RouterOutlet';
 import AppErrorBoundaryFallback from './AppErrorBoundaryFallback';
+import AuthGate from './core/auth/containers/AuthGate';
 
 export const Root = () => {
   return (
@@ -34,7 +35,9 @@ const root = createRoot(document.getElementById('root'));
 root.render(
   <I18nextProvider i18n={i18n}>
     <AuthProvider>
-      <RouterProvider router={router} />
+      <AuthGate>
+        <RouterProvider router={router} />
+      </AuthGate>
     </AuthProvider>
   </I18nextProvider>,
 );
