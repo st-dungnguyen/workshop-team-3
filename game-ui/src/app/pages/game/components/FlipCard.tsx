@@ -53,7 +53,7 @@ const FlipCard = ({
                   className="flip-card-item-front-question"
                   aria-hidden="true"
                 >
-                  ？
+                  ?
                 </span>
               </div>
               <div
