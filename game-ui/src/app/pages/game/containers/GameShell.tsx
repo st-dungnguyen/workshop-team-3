@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Spinner } from '@shared/components/common';
+import type { GameActiveConfig } from '@app/shared/models/game';
+import useGameConfig from '../hooks/useGameConfig';
 import useEligibilityCheck from '../hooks/useEligibilityCheck';
 import useGameSession from '../hooks/useGameSession';
 import VariantRenderer from '../components/VariantRenderer';
@@ -83,20 +85,21 @@ const GameServerError = ({ onRetry }: { onRetry: () => void }) => {
 
 // ── Game Content (shown only when eligible) ───────────────────────────────────
 
-const GameContent = () => {
+const GameContent = ({ config }: { config: GameActiveConfig }) => {
   const { t } = useTranslation('game');
   const {
     sessionState,
     outcome,
     coupon,
+    points,
     inlineError,
     handlePlayInitiated,
     handleAnimationComplete,
     handleRetry,
-  } = useGameSession();
+  } = useGameSession(config.campaignId);
 
   if (sessionState === 'completed') {
-    return <GameResult outcome={outcome!} coupon={coupon} />;
+    return <GameResult outcome={outcome!} coupon={coupon} points={points} />;
   }
 
   return (
@@ -116,6 +119,7 @@ const GameContent = () => {
       )}
       {inlineError === 'alreadyPlayed' && <PlayLimitScreen nextPlayAt={null} />}
       <VariantRenderer
+        variant={config.gameVariant}
         outcome={outcome}
         coupon={coupon}
         sessionState={sessionState}
@@ -126,17 +130,26 @@ const GameContent = () => {
   );
 };
 
-// ── GameShell: eligibility gate (F4.1) ───────────────────────────────────────
+// ── GameShell: config gate → eligibility gate → game ─────────────────────────
 
 const GameShell = () => {
-  const { status, nextPlayAt, retry } = useEligibilityCheck();
+  const { config, status: configStatus, retry: retryConfig } = useGameConfig();
+  const {
+    status: eligibilityStatus,
+    nextPlayAt,
+    retry: retryEligibility,
+  } = useEligibilityCheck();
 
-  if (status === 'loading') return <Spinner />;
-  if (status === 'error') return <GameSessionCheckError onRetry={retry} />;
-  if (status === 'ineligible')
+  if (configStatus === 'loading' || eligibilityStatus === 'loading')
+    return <Spinner />;
+  if (configStatus === 'error')
+    return <GameSessionCheckError onRetry={retryConfig} />;
+  if (eligibilityStatus === 'error')
+    return <GameSessionCheckError onRetry={retryEligibility} />;
+  if (eligibilityStatus === 'ineligible')
     return <PlayLimitScreen nextPlayAt={nextPlayAt} />;
 
-  return <GameContent />;
+  return <GameContent config={config!} />;
 };
 
 export default GameShell;

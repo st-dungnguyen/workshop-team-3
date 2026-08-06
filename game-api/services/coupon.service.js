@@ -19,21 +19,19 @@ class CouponService {
       : null
   }
 
-  async issueCoupon({ userId, token }) {
+  // coupon: { coupon_id, start_date, end_date }
+  async issueCoupon({ userId, token, coupon }) {
     if (!this.http) {
-      // Local dev: no COUPON_API_URL configured — return mock coupon ID
       await new Promise((r) => setTimeout(r, MOCK_DELAY_MS))
-      return this.config.couponId
+      return coupon.coupon_id
     }
-
-    const { couponId, couponStartDate, couponEndDate } = this.config
 
     const response = await this.http.post(
       '/segment',
       {
         userId,
         member: '1',
-        coupons: [{ id: couponId, startDate: couponStartDate, endDate: couponEndDate }],
+        coupons: [{ id: coupon.coupon_id, startDate: coupon.start_date, endDate: coupon.end_date }],
         information: [],
         banners: [],
       },

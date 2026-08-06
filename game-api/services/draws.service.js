@@ -1,30 +1,43 @@
 'use strict'
 
-// In-memory store keyed by userId. Replace with Firestore in production.
-const store = new Map()
-
-function todayKey() {
-  return new Date().toISOString().slice(0, 10) // YYYY-MM-DD in UTC
+function todayUTC() {
+  return new Date().toISOString().slice(0, 10) // YYYY-MM-DD UTC
 }
 
-function hasPlayedToday(userId) {
-  const records = store.get(userId) || []
-  const today = todayKey()
-  return records.some((r) => r.date === today)
+function nextMidnightUTC() {
+  const d = new Date()
+  d.setUTCDate(d.getUTCDate() + 1)
+  d.setUTCHours(0, 0, 0, 0)
+  return d.toISOString()
 }
 
-function getNextPlayAt(userId) {
-  if (!hasPlayedToday(userId)) return null
-  const tomorrow = new Date()
-  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
-  tomorrow.setUTCHours(0, 0, 0, 0)
-  return tomorrow.toISOString()
+function createDrawsService(knex) {
+  async function hasPlayedToday(userId) {
+    const row = await knex('game_sessions')
+      .where({ user_id: userId, play_date: todayUTC() })
+      .first()
+    return !!row
+  }
+
+  async function getNextPlayAt(userId) {
+    const played = await hasPlayedToday(userId)
+    return played ? nextMidnightUTC() : null
+  }
+
+  async function recordPlay(userId, { outcome, couponId = null, pointsAwarded = null }) {
+    if (!userId) throw new Error('userId is required')
+    if (outcome !== 'win' && outcome !== 'lose') throw new Error(`Invalid outcome: ${outcome}`)
+
+    await knex('game_sessions').insert({
+      user_id: userId,
+      play_date: todayUTC(),
+      outcome,
+      coupon_id: couponId,
+      points_awarded: pointsAwarded,
+    })
+  }
+
+  return { hasPlayedToday, getNextPlayAt, recordPlay }
 }
 
-function recordPlay(userId, { outcome, couponId = null }) {
-  const records = store.get(userId) || []
-  records.push({ date: todayKey(), outcome, couponId, createdAt: new Date().toISOString() })
-  store.set(userId, records)
-}
-
-module.exports = { hasPlayedToday, getNextPlayAt, recordPlay }
+module.exports = { createDrawsService }

@@ -2,7 +2,6 @@ import axios from 'axios';
 import { useCallback, useState } from 'react';
 import { useAuth } from '@shared/contexts/auth.context';
 import { GameService } from '@shared/services/game.service';
-import { GAME_CONFIG } from '@config/game.config';
 import type {
   CouponInfo,
   GameOutcome,
@@ -15,6 +14,7 @@ interface UseGameSessionReturn {
   sessionState: SessionState;
   outcome: GameOutcome | null;
   coupon: CouponInfo | null;
+  points: number | null;
   inlineError: InlineError;
   handlePlayInitiated: () => void;
   handleAnimationComplete: () => void;
@@ -23,11 +23,12 @@ interface UseGameSessionReturn {
 
 const gameService = new GameService();
 
-const useGameSession = (): UseGameSessionReturn => {
+const useGameSession = (campaignId: string): UseGameSessionReturn => {
   const { token } = useAuth();
   const [sessionState, setSessionState] = useState<SessionState>('pending');
   const [outcome, setOutcome] = useState<GameOutcome | null>(null);
   const [coupon, setCoupon] = useState<CouponInfo | null>(null);
+  const [points, setPoints] = useState<number | null>(null);
   const [inlineError, setInlineError] = useState<InlineError>(null);
 
   const handlePlayInitiated = useCallback(async () => {
@@ -37,12 +38,10 @@ const useGameSession = (): UseGameSessionReturn => {
     setInlineError(null);
 
     try {
-      const result = await gameService.play(
-        GAME_CONFIG.campaignId,
-        token ?? '',
-      );
+      const result = await gameService.play(campaignId, token ?? '');
       setOutcome(result.outcome);
       setCoupon(result.coupon ?? null);
+      setPoints(result.points ?? null);
       setSessionState('revealing');
     } catch (error) {
       if (
@@ -56,7 +55,7 @@ const useGameSession = (): UseGameSessionReturn => {
       }
       setSessionState('pending');
     }
-  }, [sessionState, token]);
+  }, [sessionState, token, campaignId]);
 
   const handleAnimationComplete = useCallback(() => {
     setSessionState('completed');
@@ -70,6 +69,7 @@ const useGameSession = (): UseGameSessionReturn => {
     sessionState,
     outcome,
     coupon,
+    points,
     inlineError,
     handlePlayInitiated,
     handleAnimationComplete,

@@ -7,7 +7,7 @@
 
 ## 1. Epic Overview
 
-E2 defines the shared game mechanics, session lifecycle, and variant system that power all seasonal mini games. The business requirement is that the seasonal game can be swapped with only a configuration change and a frontend redeploy — no native app update, no re-architecture.
+E2 defines the shared game mechanics, session lifecycle, and variant system that power all seasonal mini games. The business requirement is that the seasonal game can be swapped with only a backend configuration change — no native app update, no frontend redeploy, no re-architecture.
 
 The key insight is that all current and future game variants (Scratch Card, Flip Card, and others) share an identical underlying mechanic:
 
@@ -28,22 +28,24 @@ Only the animation and interaction style differ between variants. The session li
 
 ### In Scope
 
-- A deploy-time configuration that declares the active game variant (Scratch Card or Flip Card)
+- A runtime API-driven configuration that declares the active game variant (Scratch Card or Flip Card), stored in the backend and fetched by the WebView on every load
 - A shared game shell that manages the session lifecycle regardless of which variant is active
 - A variant contract defining what each game module must implement and what the shell provides
-- The Scratch Card variant (scratchable card animation, scratch gesture interaction)
-- The Flip Card variant (multi-card reveal animation, single-card tap interaction)
-- Server-authoritative outcome resolution — win/lose is determined by the backend, not the frontend
+- The Scratch Card variant (scratchable card animation, scratch gesture interaction; **guaranteed win** with tier-based coupon value)
+- The Flip Card variant (multi-card reveal animation, single-card tap interaction; standard win/lose mechanic)
+- Server-authoritative outcome resolution — win/lose and reward tier are determined by the backend, not the frontend
 - A shared result screen for win and lose outcomes
-- Localized text for all player-facing strings in `ja` and `en` (`game.json` namespace)
+- The Daily Streak System for the Scratch Card variant — 7-day consecutive challenge with streak bar display and special bonus coupon on completion
+- Localized text for all player-facing strings in `ja` and `en` (`game.json` and `streak.json` namespaces)
 
 ### Out of Scope
 
 - Adding a third game variant (covered by the variant contract; implementation is a future task)
 - The reward/coupon flow after a win — owned by [E3](../reward-coupon/_epic-E3-reward-coupon.md)
 - Session play-limit enforcement (once per day, cooldown) — owned by [E4](../game-session/_epic-E4-game-session.md)
+- An in-WebView coupon history list — the native app already provides this; the WebView navigates there via AppLink
 - Game analytics or event tracking
-- A/B testing between variants — only one variant is active at a time per deploy
+- A/B testing between variants — only one variant is active at a time
 
 ## 3. User Personas
 
@@ -60,10 +62,15 @@ Only the animation and interaction style differ between variants. The session li
 | F2.1 | Active Game Configuration | P0 | Draft |
 | F2.2 | Game Play Session | P0 | Draft |
 | F2.3 | Game Result Screen | P0 | Draft |
+| F2.4 | Daily Streak System | P1 | Draft |
+| F2.5 | Persistent Game Session Storage (PostgreSQL) | P0 | Draft |
+| F2.6 | Campaign & Coupon Management | P1 | Draft |
 
 ## 5. Key Business Rules
 
-- **Server-authoritative outcomes:** The backend is the sole authority on whether a player wins or loses. The frontend never generates or modifies the outcome locally.
+- **Server-authoritative outcomes:** The backend is the sole authority on whether a player wins or loses, and on the reward tier when a win is guaranteed (Scratch Card). The frontend never generates or modifies the outcome locally.
 - **Single-play session:** A player gets exactly one play attempt per session. Once a session moves to `resolving`, it cannot be replayed without starting a new session (governed by E4).
-- **Variant-agnostic shell:** The game shell must work identically regardless of which variant is active. Swapping the variant config and redeploying is the complete change required.
+- **Variant-agnostic shell:** The game shell must work identically regardless of which variant is active. Swapping the variant requires only a backend config change — no frontend redeploy needed for already-registered variants.
 - **No variant knowledge in shared code:** The session lifecycle, outcome resolution, and result screen must not contain variant-specific logic (e.g., no `if (variant === "wheel")` in shared modules).
+- **Scratch Card is guaranteed win:** The Scratch Card variant always produces a `win` outcome. The backend determines which reward tier the player wins (e.g., 100円, 200円, 500円, 1,000円). A `lose` outcome from the backend is only valid for the Flip Card variant.
+- **Streak is Scratch Card only:** The Daily Streak System (F2.4) is active only when the Scratch Card variant is configured. The Flip Card variant has no streak bar, no streak tracking, and no 7-day bonus.

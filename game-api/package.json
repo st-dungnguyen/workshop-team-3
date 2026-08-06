@@ -9,7 +9,11 @@
   "scripts": {
     "test": "node --test test/**/*.test.js",
     "start": "fastify start -l info app.js",
-    "dev": "fastify start -w -l info -P app.js"
+    "dev": "fastify start -w -l info -P app.js",
+    "migrate": "knex migrate:latest",
+    "migrate:rollback": "knex migrate:rollback",
+    "migrate:make": "knex migrate:make",
+    "seed": "knex seed:run"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +28,8 @@
     "fastify-cli": "^7.4.1",
     "fastify-plugin": "^5.0.0",
     "jsonwebtoken": "^9.0.3",
-    "jwks-rsa": "^4.1.0"
+    "jwks-rsa": "^4.1.0",
+    "knex": "^3.3.0",
+    "pg": "^8.22.0"
   }
 }

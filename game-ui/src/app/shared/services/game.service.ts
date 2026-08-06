@@ -1,7 +1,12 @@
 import axios from 'axios';
 import { environment } from '@config/environment';
 import { ENDPOINT } from '@config/endpoint';
-import type { EligibilityResult, PlayResult } from '@app/shared/models/game';
+import { GAME_CONFIG } from '@config/game.config';
+import type {
+  EligibilityResult,
+  GameActiveConfig,
+  PlayResult,
+} from '@app/shared/models/game';
 
 const MOCK_COUPON_END_DATE = (() => {
   const d = new Date();
@@ -14,6 +19,24 @@ export class GameService {
     baseURL: environment.apiBaseUrl,
     headers: { 'Content-Type': 'application/json' },
   });
+
+  async getConfig(token: string): Promise<GameActiveConfig> {
+    if (import.meta.env.VITE_DEMO_MODE === 'true') {
+      await new Promise<void>((r) => setTimeout(r, 300));
+      return {
+        campaignId: GAME_CONFIG.campaignId || 'demo-campaign',
+        gameVariant: GAME_CONFIG.activeVariant,
+      };
+    }
+
+    const response = await this.http.get<GameActiveConfig>(
+      ENDPOINT.game.config,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  }
 
   async checkEligibility(token: string): Promise<EligibilityResult> {
     if (import.meta.env.VITE_DEMO_MODE === 'true') {

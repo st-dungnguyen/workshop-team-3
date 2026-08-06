@@ -33,9 +33,9 @@ E3 covers everything that happens after a player wins a game session: recording 
 
 - Coupon issuance itself — that is performed server-side by the project backend calling the Segment Coupon API; the frontend only receives the `couponId`
 - Displaying coupon details within the WebView — the coupon detail is shown in the native app after AppLink navigation
+- An in-WebView coupon history list — the native app already provides a coupon screen; the WebView navigates there via AppLink when needed
 - Coupon validity, expiry, or redemption — those are managed by the native app and backend
 - Refund or coupon cancellation flows
-- Displaying the player's coupon history within the WebView
 
 ## 3. User Personas
 

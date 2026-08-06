@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type CSSProperties, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CouponInfo, GameOutcome } from '@app/shared/models/game';
 
@@ -37,18 +37,37 @@ const Confetti = () => (
             '--c-width': i % 3 === 0 ? '6px' : '9px',
             '--c-height': i % 3 === 0 ? '6px' : '12px',
             '--c-radius': i % 4 === 0 ? '50%' : '2px',
-          } as React.CSSProperties
+          } as CSSProperties
         }
       />
     ))}
   </div>
 );
 
-interface WinResultProps {
-  coupon: CouponInfo | null;
+interface PointsBadgeProps {
+  points: number;
 }
 
-const WinResult = ({ coupon }: WinResultProps) => {
+const PointsBadge = ({ points }: PointsBadgeProps) => {
+  const { t } = useTranslation('game');
+  return (
+    <div className="game-result-points-badge">
+      <span className="game-result-points-badge-icon" aria-hidden="true">
+        ⭐
+      </span>
+      <span className="game-result-points-badge-text">
+        {t('result.pointsAwarded', { count: points })}
+      </span>
+    </div>
+  );
+};
+
+interface WinResultProps {
+  coupon: CouponInfo | null;
+  points: number | null;
+}
+
+const WinResult = ({ coupon, points }: WinResultProps) => {
   const { t } = useTranslation('game');
   const [ctaState, setCtaState] = useState<'idle' | 'loading' | 'error'>(
     'idle',
@@ -103,6 +122,8 @@ const WinResult = ({ coupon }: WinResultProps) => {
         </div>
       )}
 
+      {points !== null && <PointsBadge points={points} />}
+
       {ctaState === 'error' && (
         <p className="game-result-win-error">{t('result.claimError')}</p>
       )}
@@ -127,7 +148,11 @@ const WinResult = ({ coupon }: WinResultProps) => {
   );
 };
 
-const LoseResult = () => {
+interface LoseResultProps {
+  points: number | null;
+}
+
+const LoseResult = ({ points }: LoseResultProps) => {
   const { t } = useTranslation('game');
 
   return (
@@ -141,6 +166,9 @@ const LoseResult = () => {
       <div className="game-result-lose-bubble">
         <p className="game-result-lose-body">{t('result.lose.body')}</p>
       </div>
+
+      {points !== null && <PointsBadge points={points} />}
+
       <button
         className="btn-primary game-result-cta game-result-cta-close"
         onClick={() => {
@@ -156,11 +184,12 @@ const LoseResult = () => {
 interface GameResultProps {
   outcome: GameOutcome;
   coupon: CouponInfo | null;
+  points: number | null;
 }
 
-const GameResult = ({ outcome, coupon }: GameResultProps) => {
-  if (outcome === 'win') return <WinResult coupon={coupon} />;
-  return <LoseResult />;
+const GameResult = ({ outcome, coupon, points }: GameResultProps) => {
+  if (outcome === 'win') return <WinResult coupon={coupon} points={points} />;
+  return <LoseResult points={points} />;
 };
 
 export default GameResult;

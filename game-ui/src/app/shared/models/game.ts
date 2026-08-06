@@ -27,6 +27,7 @@ export interface GameVariantProps {
 export interface PlayResult {
   outcome: GameOutcome;
   coupon?: CouponInfo; // present when outcome === 'win'
+  points?: number | null; // points granted for this play (null if point service disabled)
 }
 
 export interface EligibilityResult {
@@ -37,4 +38,9 @@ export interface EligibilityResult {
 export interface GameConfig {
   activeVariant: GameVariant;
   campaignId: string;
+}
+
+export interface GameActiveConfig {
+  campaignId: string;
+  gameVariant: GameVariant;
 }
