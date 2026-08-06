@@ -2,13 +2,11 @@
 
 const { verifyToken, extractBearerToken } = require('../../helpers/jwt.helper')
 const CouponService = require('../../services/coupon.service')
-const PointService = require('../../services/point.service')
 const { createDrawsService } = require('../../services/draws.service')
 const { createCampaignService } = require('../../services/campaign.service')
 
 module.exports = async function (fastify, opts) {
   const couponService = new CouponService(fastify.config)
-  const pointService = new PointService(fastify.config)
   const { hasPlayedToday, getNextPlayAt, recordPlay } = createDrawsService(fastify.knex)
   const { getActiveConfig, getRandomCoupon } = createCampaignService(fastify.knex)
 
@@ -109,7 +107,6 @@ module.exports = async function (fastify, opts) {
                 endDate: { type: 'string' },
               },
             },
-            points: { type: 'integer', nullable: true },
           },
         },
       },
@@ -132,18 +129,8 @@ module.exports = async function (fastify, opts) {
     const isWin = Math.random() < campaignConfig.winProbability
 
     if (!isWin) {
-      // Participation points for non-winners (global config, fire-and-forget)
-      let pointsAwarded = null
-      try {
-        pointsAwarded = await pointService.grantPoints({
-          userId: user.userId,
-          point: fastify.config.pointLose,
-        })
-      } catch (err) {
-        request.log.warn({ err: err.message, userId: user.userId }, 'Lose point grant failed (non-fatal)')
-      }
-      await recordPlay(user.userId, { outcome: 'lose', pointsAwarded })
-      return { outcome: 'lose', coupon: null, points: pointsAwarded }
+      await recordPlay(user.userId, { outcome: 'lose' })
+      return { outcome: 'lose', coupon: null }
     }
 
     const selectedCoupon = await getRandomCoupon(campaignId)
@@ -152,26 +139,13 @@ module.exports = async function (fastify, opts) {
       return reply.code(500).send({ code: 'systemError', message: 'No coupons available' })
     }
 
-    // Win points come from the coupon tier, not a global config value
-    let pointsAwarded = null
-    try {
-      if (selectedCoupon.points != null) {
-        pointsAwarded = await pointService.grantPoints({
-          userId: user.userId,
-          point: selectedCoupon.points,
-        })
-      }
-    } catch (err) {
-      request.log.warn({ err: err.message, userId: user.userId }, 'Win point grant failed (non-fatal)')
-    }
-
     try {
       const issuedCouponId = await couponService.issueCoupon({
         userId: user.userId,
         token: user.token,
         coupon: selectedCoupon,
       })
-      await recordPlay(user.userId, { outcome: 'win', couponId: issuedCouponId, pointsAwarded })
+      await recordPlay(user.userId, { outcome: 'win', couponId: issuedCouponId })
 
       return {
         outcome: 'win',
@@ -181,7 +155,6 @@ module.exports = async function (fastify, opts) {
           discount: selectedCoupon.discount,
           endDate: selectedCoupon.end_date,
         },
-        points: pointsAwarded,
       }
     } catch (err) {
       request.log.error({ err: err.message, status: err.response?.status }, 'Coupon API error')
