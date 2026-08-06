@@ -23,10 +23,15 @@ exports.seed = async function (knex) {
     return d.toISOString()
   })()
 
+  const variants = (process.env.GAME_VARIANTS || 'scratch-card,flip-card')
+    .split(',')
+    .map((v) => v.trim())
+    .filter(Boolean)
+
   await knex('campaigns').insert({
     id: campaignId,
     name: process.env.COUPON_TITLE || 'すかいらーくグループ全店共通クーポン',
-    game_variant: process.env.VITE_GAME_VARIANT || 'scratch-card',
+    game_variants: `{${variants.join(',')}}`,
     is_active: true,
     win_probability: Number(process.env.WIN_PROBABILITY) || 0.5,
   })

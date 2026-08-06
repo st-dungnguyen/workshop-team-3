@@ -5,9 +5,15 @@ function createCampaignService(knex) {
     const campaign = await knex('campaigns').where({ is_active: true }).first()
     if (!campaign) return null
 
+    const variants = campaign.game_variants
+    if (!variants || variants.length === 0) return null
+
+    // Uniform random selection among active variants
+    const selected = variants[Math.floor(Math.random() * variants.length)]
+
     return {
       campaignId: campaign.id,
-      gameVariant: campaign.game_variant,
+      gameVariant: selected,
       winProbability: Number(campaign.win_probability),
     }
   }
