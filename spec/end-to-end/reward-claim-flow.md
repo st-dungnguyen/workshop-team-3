@@ -90,11 +90,11 @@ sequenceDiagram
 
 ### Phase 3a — Player taps "Use Coupon"
 
-**Frontend action:** `window.location.href = 'https://www.skylark.co.jp/app/coupon/segment?id={encodedCouponId}'`
+**Frontend action:** `window.location.href = '${COUPON_BASE_URL}/app/coupon/detail?id={encodedCouponId}'`
 
 **No API call is made.**
 
-**Native app action:** Intercepts AppLink → opens coupon detail screen for the specific segment coupon.
+**Native app action:** Intercepts AppLink → opens coupon detail screen for the specific coupon.
 
 ```mermaid
 sequenceDiagram
@@ -103,7 +103,7 @@ sequenceDiagram
     participant HOST as Native App
 
     P->>FE: Tap "Use Coupon"
-    FE->>HOST: window.location.href → /app/coupon/segment?id={couponId}
+    FE->>HOST: window.location.href → /app/coupon/detail?id={couponId}
     HOST->>P: Native coupon detail screen
 ```
 
@@ -111,7 +111,7 @@ sequenceDiagram
 
 ### Phase 3b — Player taps "My Coupon"
 
-**Frontend action:** `window.location.href = 'https://www.skylark.co.jp/app/coupon'`
+**Frontend action:** `window.location.href = '${COUPON_BASE_URL}/app/main?to=coupon_list'`
 
 **No API call is made. No `couponId` needed.**
 
@@ -124,7 +124,7 @@ sequenceDiagram
     participant HOST as Native App
 
     P->>FE: Tap "My Coupon"
-    FE->>HOST: window.location.href → /app/coupon
+    FE->>HOST: window.location.href → /app/main?to=coupon_list
     HOST->>P: Native coupon list screen
 ```
 
@@ -149,8 +149,8 @@ The `POST /game/claim` response arrives at some point after Phase 1. The fronten
 - [x] `useGameSession` fires `claimCoupon` fire-and-forget after win result in `handlePlayInitiated`
 - [x] `GameResult.tsx` — auto-redirect removed (`AUTO_CLAIM_DELAY_MS` deleted), win screen persists
 - [x] `GameResult.tsx` win screen renders two CTAs ("Use Coupon" / "My Coupon")
-  - "Use Coupon" → `/app/coupon/segment?id={encodedCouponId}`
-  - "My Coupon" → `/app/coupon`
+  - "Use Coupon" → `/app/coupon/detail?id={encodedCouponId}`
+  - "My Coupon" → `/app/main?to=coupon_list`
 - [x] i18n keys `result.useCoupon` and `result.myCoupon` added to `en/game.json` and `ja/game.json`
 - [x] SCSS `.game-result-cta-group` flex layout added in `_game.scss`
 
@@ -179,8 +179,8 @@ The `POST /game/claim` response arrives at some point after Phase 1. The fronten
 - [ ] Smoke test (`VITE_ENV=local`): win result → `POST /game/claim` fires to game-api with `local-dev-token`
 - [ ] Smoke test (`VITE_ENV=local`): `local-dev-token` absent from localStorage after auth
 - [ ] Smoke test: win screen appears immediately with no loading state, no auto-redirect
-- [ ] Smoke test: "Use Coupon" navigates to `/app/coupon/segment?id={couponId}` with no prior API call
-- [ ] Smoke test: "My Coupon" navigates to `/app/coupon` with no `id` param and no API call
+- [ ] Smoke test: "Use Coupon" navigates to `/app/coupon/detail?id={couponId}` with no prior API call
+- [ ] Smoke test: "My Coupon" navigates to `/app/main?to=coupon_list` with no API call
 
 ### Backend (completed ✅)
 
@@ -199,8 +199,8 @@ The `POST /game/claim` response arrives at some point after Phase 1. The fronten
 
 - [ ] AC-311: Background claim fires without player action (network tab confirms `POST /game/claim`)
 - [ ] AC-312: Win screen appears with no loading state
-- [ ] AC-232: "Use Coupon" navigates to `/app/coupon/segment?id=...` with no API call
-- [ ] AC-233: "My Coupon" navigates to `/app/coupon` with no API call
+- [ ] AC-232: "Use Coupon" navigates to `/app/coupon/detail?id=...` with no API call
+- [ ] AC-233: "My Coupon" navigates to `/app/main?to=coupon_list` with no API call
 - [ ] AC-234: Win screen persists — no auto-redirect after 3s, 10s, or any delay
 - [ ] AC-235: CTAs are enabled while claim is in flight
 - [ ] AC-313: Background claim 500 → win screen unchanged

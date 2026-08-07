@@ -2,7 +2,7 @@
 
 **Epic ID:** E1
 **Priority:** P0
-**Status:** Draft
+**Status:** Implemented
 **Date:** 2026-08-06
 
 ## 1. Epic Overview
@@ -49,9 +49,9 @@ E1 establishes the trust boundary between the native mobile app and the WebView.
 
 | Feature ID | Feature Name | Priority | Status |
 |---|---|---|---|
-| F1.1 | URL Query Param Token Reception | P0 | Draft |
-| F1.2 | JS Bridge Token Reception | P0 | Draft |
-| F1.3 | Token Validation & Game Access Gate | P0 | Draft |
+| F1.1 | URL Query Param Token Reception | P0 | Implemented |
+| F1.2 | JS Bridge Token Reception | P0 | Implemented |
+| F1.3 | Token Validation & Game Access Gate | P0 | Implemented |
 
 ## 5. Key Business Rules
 

@@ -3,7 +3,7 @@
 **Spec:** [_epic-E2-game-core.md](../../spec/game-core/_epic-E2-game-core.md)
 **Depends on:** [E1 — Auth Bridge](../auth-bridge/_epic-E1-auth-bridge.md) ✅ implemented
 **Date:** 2026-08-06
-**Status:** Ready to implement
+**Status:** ✅ Implemented (F2.4 Daily Streak not implemented)
 
 ---
 
@@ -19,59 +19,65 @@ The session flow is always: `pending → initiated → resolving → revealing �
 
 ---
 
-## 2. Cleanup First — Delete Unused Boilerplate
+## 2. Cleanup — Completed
 
-Before adding game code, remove everything the WebView will never use. This keeps routes, services, and bundles clean.
+All boilerplate files were deleted during implementation. The WebView codebase contains only game-related features.
 
-### Files to delete
+### Files deleted
 
 | Path | Reason |
 |---|---|
-| `src/app/core/auth/Auth.tsx` | Auth shell layout — only wraps Login/Register |
+| `src/app/core/auth/Auth.tsx` | Auth shell layout — only wrapped Login/Register |
 | `src/app/core/auth/auth.routes.ts` | `/auth/login`, `/auth/register` routes |
 | `src/app/core/auth/containers/Login.tsx` | Login form — WebView never shows login |
-| `src/app/core/auth/containers/Register.tsx` | Registration form — WebView never shows registration |
+| `src/app/core/auth/containers/Register.tsx` | Registration form |
 | `src/app/pages/home/` | Placeholder home page |
 | `src/app/pages/articles/` | Boilerplate reference implementation |
 | `src/app/shared/services/article.service.ts` | Boilerplate domain service |
+| `src/app/core/services/auth.service.ts` | Superseded by `auth-bridge.service.ts` |
 
-### Files to update
+### Files updated
 
 | File | Change |
 |---|---|
-| `src/app/app.routes.ts` | Remove `authRoutes` import and spread |
-| `src/app/pages/page.routes.ts` | Remove `homeRoutes`, `articleRoutes`; add `gameRoutes`; add root redirect |
-| `src/app/pages/Page.tsx` | Remove Header/Footer — game is full-screen WebView with no nav bar |
+| `src/app/app.routes.ts` | Only `pageRoutes` — no `authRoutes` |
+| `src/app/pages/page.routes.ts` | Only `gameRoutes` + root redirect to `/game` |
 
 ---
 
-## 3. New File Map
+## 3. Actual File Map
 
 ```
 src/
 ├── config/
-│   └── game.config.ts              # active variant + campaign metadata (F2.1)
+│   ├── endpoint.ts                 # API endpoints (auth.validate, game.config, game.eligibility, game.play, game.claim)
+│   └── environment.ts              # VITE_API_BASE_URL, VITE_ENV → isLocal
 │
 └── app/
     ├── pages/
     │   └── game/
-    │       ├── game.routes.ts
+    │       ├── game.routes.ts            # GameRedirect (/) + GameShell (/game, isProtected)
     │       ├── containers/
-    │       │   ├── GameShell.tsx         # session lifecycle host (F2.2)
-    │       │   └── GameResult.tsx        # shared win/lose result screen (F2.3)
+    │       │   ├── GameShell.tsx         # config gate → eligibility gate → GameContent (F2.2)
+    │       │   ├── GameResult.tsx        # shared win/lose result screen (F2.3)
+    │       │   └── GameRedirect.tsx      # <Navigate to="/game" replace />
     │       ├── hooks/
-    │       │   └── useGameSession.ts     # session state machine
+    │       │   ├── useGameConfig.ts      # GET /game/config → GameActiveConfig (F2.1)
+    │       │   ├── useEligibilityCheck.ts # GET /game/eligibility → eligible/ineligible/error (E4)
+    │       │   └── useGameSession.ts     # session state machine (F2.2)
     │       └── components/
-    │           ├── VariantRenderer.tsx   # reads config → renders active variant
+    │           ├── VariantRenderer.tsx   # receives variant prop → renders active variant
     │           ├── ScratchCard.tsx       # scratch-card variant
     │           └── FlipCard.tsx          # flip-card variant
     │
     └── shared/
         ├── models/
-        │   └── game.ts                   # SessionState, GameOutcome, GameVariant types
+        │   └── game.ts                   # SessionState, GameOutcome, GameVariant, CouponInfo, PlayResult, EligibilityResult, GameActiveConfig
         └── services/
-            └── game.service.ts           # POST /game/play
+            └── game.service.ts           # GET /game/config, GET /game/eligibility, POST /game/play, POST /game/claim
 ```
+
+> **Note:** There is no `config/game.config.ts` static file. The active variant and campaignId are fetched at runtime via `GET /game/config` through `useGameConfig`. No `VITE_GAME_VARIANT` or `VITE_CAMPAIGN_ID` env vars exist.
 
 ---
 
@@ -115,50 +121,81 @@ Error paths:
 ```typescript
 // Every variant component must accept exactly these props
 interface GameVariantProps {
-  outcome: 'win' | 'lose' | null;       // null while pending/resolving
+  outcome: GameOutcome | null;           // null while pending/resolving
+  coupon: CouponInfo | null;             // populated when outcome === 'win'
   sessionState: SessionState;
   onPlayInitiated: () => void;           // player tapped/scratched → call this
   onAnimationComplete: () => void;       // animation done → call this
 }
 ```
 
-`GameShell` passes these props to `VariantRenderer`, which passes them down to whichever variant is active. Adding a new variant = create a new component matching this interface and register it in `VariantRenderer`.
+`GameShell > GameContent` passes these props to `VariantRenderer`, which passes them down to whichever variant is active. Adding a new variant = create a new component matching this interface and register it in `VariantRenderer`.
 
 ---
 
-## 7. Game Config (F2.1)
+## 7. Game Config (F2.1) — Actual Implementation
+
+Config is fetched at runtime via `GET /game/config` (not a static env-var file):
 
 ```typescript
-// src/config/game.config.ts
-export const GAME_CONFIG = {
-  activeVariant: (import.meta.env.VITE_GAME_VARIANT ?? 'scratch-card') as GameVariant,
-  campaignId: import.meta.env.VITE_CAMPAIGN_ID ?? '',
-} as const;
+// src/app/pages/game/hooks/useGameConfig.ts
+const useGameConfig = (): UseGameConfigReturn => {
+  const { token } = useAuth();
+  const [status, setStatus] = useState<ConfigStatus>('loading');
+  const [config, setConfig] = useState<GameActiveConfig | null>(null);
+
+  const load = useCallback(async () => {
+    setStatus('loading');
+    try {
+      const result = await gameService.getConfig(token ?? '');
+      setConfig(result);
+      setStatus('ready');
+    } catch {
+      setStatus('error');
+    }
+  }, [token]);
+
+  useEffect(() => { load(); }, [load]);
+  return { config, status, retry: load };
+};
 ```
 
-`.env` variables required:
-```
-VITE_GAME_VARIANT=scratch-card   # or: flip-card
-VITE_CAMPAIGN_ID=campaign-2026-summer
-```
+API response shape: `{ campaignId: string, gameVariant: 'scratch-card' | 'flip-card' }` — matches `GameActiveConfig` in `shared/models/game.ts`.
 
-`VariantRenderer` reads `GAME_CONFIG.activeVariant` and throws a clear error if the value is not a known key — satisfies REQ-204.
+`VariantRenderer` receives `variant` as a prop (from `GameContent` which gets it from `useGameConfig`) — it does not read from any static config.
+
+**Local dev mock** (`VITE_ENV=local`): `GameService.getConfig()` returns `{ campaignId: 'local-campaign', gameVariant: 'flip-card' }` without an API call.
 
 ---
 
-## 8. Backend Endpoint
+## 8. Backend Endpoints
 
 ```
+GET /game/config
+Authorization: Bearer <token>
+Response 200: { campaignId: string, gameVariant: "scratch-card" | "flip-card" }
+Response 404: { code: "NO_ACTIVE_CAMPAIGN" }  → game.sessionCheckError
+Response 5xx: any                              → game.sessionCheckError
+
+GET /game/eligibility
+Authorization: Bearer <token>
+Response 200: { eligible: boolean, nextPlayAt: string | null }
+Response 401:  → auth.unauthorized
+
 POST /game/play
 Authorization: Bearer <token>
 Body: { campaignId: string }
-
-Response 200: { outcome: "win" | "lose" }
+Response 200: { outcome: "win" | "lose", coupon?: CouponInfo, points?: number | null }
 Response 403: { code: "ALREADY_PLAYED" }   → game.alreadyPlayed state
 Response 5xx: any                           → game.serverError state (retry available)
+
+POST /game/claim
+Authorization: Bearer <token>
+Body: { couponId: string }
+Response 200: (ignored — fire-and-forget)
 ```
 
-Add `game: { play: 'game/play' }` to `src/config/endpoint.ts`.
+All endpoints defined in `src/config/endpoint.ts`.
 
 ---
 

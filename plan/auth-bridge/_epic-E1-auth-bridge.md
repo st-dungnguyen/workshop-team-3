@@ -2,7 +2,7 @@
 
 **Spec:** [_epic-E1-auth-bridge.md](../../spec/auth-bridge/_epic-E1-auth-bridge.md)
 **Date:** 2026-08-06
-**Status:** Ready to implement
+**Status:** ✅ Implemented
 
 ---
 
@@ -60,10 +60,11 @@ interface AuthContextType {
   authStatus: AuthStatus;
   authError: AuthErrorCode | null;
   token: string | null;
+  retryCount: number;           // incremented by retry(); triggers useAuthBridge re-run
+  setLoading: () => void;
   setTokenValidated: (token: string) => void;
   setAuthError: (code: AuthErrorCode) => void;
-  setLoading: () => void;
-  retryValidation: () => void; // increments a retry counter to re-trigger the bridge hook
+  retry: () => void;            // increments retryCount → re-triggers useAuthBridge effect
 }
 ```
 
@@ -98,35 +99,41 @@ Response 403: { code: "TOKEN_EXPIRED" | "TOKEN_INVALID" } → auth.tokenExpired 
 Response 5xx: any                        → auth.serverError (retry available)
 ```
 
-Add `AUTH_VALIDATE: '/auth/validate'` to `src/config/api.config.ts`.
+Add `auth.validate: 'auth/validate'` to `src/config/endpoint.ts` (actual file path; there is no `api.config.ts`).
 
 ---
 
-## 6. Demo Mode (Fake Token)
+## 6. Local Development Mode
 
-For the demo build, real backend validation is bypassed. This keeps all auth gate UI intact while removing the backend dependency.
+For local development, real backend validation is still called but with a synthetic token. This keeps the auth gate flow identical across all environments.
 
-**Mechanism:** `VITE_DEMO_MODE=true` in `.env.demo` (or `.env.local`).
+**Mechanism:** `VITE_ENV=local` in `.env` (checked via `environment.isLocal = import.meta.env.VITE_ENV === 'local'`).
 
-**Behavior when `VITE_DEMO_MODE=true`:**
-- `AuthBridgeService.validate()` skips the API call and resolves immediately with a success payload.
-- Any non-empty token is accepted (use `?accessToken=demo` in the browser URL to trigger the happy path).
-- The `AuthGate` loading screen still appears briefly (realistic UX), then transitions to the game.
-- All error screens remain accessible by appending `?accessToken=` (empty) to trigger `tokenMissing`.
+**Behavior when `VITE_ENV=local`:**
+- `useAuthBridge` skips all token collection channels (URL param, JS bridge, localStorage) and immediately calls `handleValidate('local-dev-token')`.
+- `AuthBridgeService.validate()` short-circuits when `environment.isLocal` is true and returns `{ success: true, userId: 'local-dev-user' }` without an API call.
+- The `local-dev-token` is **not** written to localStorage after successful validation (prevents pollution if environment switches).
+- All game API calls also return mock data when `VITE_ENV=local` (in `GameService`).
 
 **Implementation:**
 ```typescript
 // auth-bridge.service.ts
 async validate(token: string): Promise<ValidateResult> {
-  if (import.meta.env.VITE_DEMO_MODE === 'true') {
-    await new Promise(r => setTimeout(r, 800)); // simulate latency
-    return { success: true, userId: 'demo-user' };
+  if (environment.isLocal) {
+    return { success: true, userId: 'local-dev-user' };
   }
-  // real API call
+  // real API call to POST /auth/validate
+}
+
+// useAuthBridge.ts
+if (environment.isLocal) {
+  tokenReceivedRef.current = true;
+  handleValidate(LOCAL_DEV_TOKEN);  // 'local-dev-token'
+  return;
 }
 ```
 
-No bypass flag in production builds. `VITE_DEMO_MODE` is not set in `.env.production`.
+No `VITE_DEMO_MODE` flag exists in the codebase — local development uses `VITE_ENV=local` exclusively.
 
 ---
 
@@ -177,9 +184,10 @@ Tasks must be done in this order to avoid broken intermediate states:
 
 ---
 
-## 10. What Does NOT Change
+## 10. Implementation Notes
 
-- `core/auth/Auth.tsx`, `auth.routes.ts`, `Login.tsx`, `Register.tsx` — left as-is (unused by WebView but harmless).
-- `core/services/api.service.ts` — no changes needed; `AuthBridgeService` calls it via `ApiService`.
-- `core/services/auth.service.ts` — no changes needed.
-- The overall `src/app/app.routes.ts` aggregation pattern — same shape, just wraps page routes with `AuthGate`.
+- `core/auth/Auth.tsx`, `auth.routes.ts`, `Login.tsx`, `Register.tsx` — **deleted** during E2 cleanup. The WebView has no login UI.
+- `AuthBridgeService` uses its own `axios.create()` instance (not the shared `api.service.ts`) to keep auth logic self-contained.
+- `core/services/auth.service.ts` — deleted; superseded by `auth-bridge.service.ts`.
+- The retry mechanism: `AuthGate` calls `useAuthBridge()` which subscribes to `retryCount` from `AuthContext`. The `retry()` function increments `retryCount`, which re-runs the `useEffect` in `useAuthBridge` to re-attempt validation.
+- Execution order steps 9–10 referencing `config/api.config.ts` and `.env.demo` are obsolete — endpoint is in `config/endpoint.ts` and local dev uses `VITE_ENV=local`.

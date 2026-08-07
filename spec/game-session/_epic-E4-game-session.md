@@ -2,7 +2,7 @@
 
 **Epic ID:** E4
 **Priority:** P0
-**Status:** Draft
+**Status:** Implemented
 **Date:** 2026-08-06
 
 ## 1. Epic Overview
@@ -49,8 +49,8 @@ E4 governs session eligibility and play-limit enforcement for the mini game. The
 
 | Feature ID | Feature Name | Priority | Status |
 |---|---|---|---|
-| F4.1 | Pre-Game Session Eligibility Check | P0 | Draft |
-| F4.2 | Play Limit & Cooldown Screen | P0 | Draft |
+| F4.1 | Pre-Game Session Eligibility Check | P0 | Implemented |
+| F4.2 | Play Limit & Cooldown Screen | P0 | Implemented |
 
 ## 5. Key Business Rules
 

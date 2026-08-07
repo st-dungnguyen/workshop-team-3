@@ -2,7 +2,7 @@
 
 **Epic ID:** E3
 **Priority:** P0
-**Status:** In Progress
+**Status:** Implemented
 **Date:** 2026-08-06
 
 ## 1. Epic Overview
@@ -49,14 +49,15 @@ E3 covers everything that happens after a player wins a game session: automatica
 
 | Feature ID | Feature Name | Priority | Status |
 |---|---|---|---|
-| F3.1 | Auto Background Coupon Claim | P0 | In Progress |
-| F3.2 | Coupon Delivery via AppLink | P0 | In Progress |
+| F3.1 | Auto Background Coupon Claim | P0 | Implemented |
+| F3.2 | Coupon Delivery via AppLink | P0 | Implemented |
 
 ## 5. Key Business Rules
 
-- **Frontend never calls the Coupon API directly.** The frontend calls the project backend (`POST /game/claim`) to trigger issuance; the backend is responsible for calling `POST /segment` on the Coupon API.
+- **Frontend never calls the Coupon API directly.** The frontend fires `POST /game/claim` to the project backend as a fire-and-forget call; the backend calls `POST /segment` on the Coupon API server-side.
 - **Claim is automatic, not player-triggered.** The frontend fires the claim request immediately when a win result is received from `play()` — before the animation completes and before the player sees the win screen.
 - **couponId comes from the `play()` response.** The `play()` API returns the `couponId` as part of the win result. This ID is used for AppLink construction; the `claimCoupon` call confirms issuance server-side but the frontend does not wait for its response.
 - **The win screen is persistent.** After winning, the player remains on the win result screen until they actively tap a CTA. There is no auto-redirect.
-- **Two direct navigation CTAs.** "Use Coupon" navigates to the specific won coupon detail (`/app/coupon/segment?id={couponId}`). "My Coupon" navigates to the native app's coupon list (`/app/coupon`). Neither CTA triggers an API call — they navigate directly.
-- **Coupon type is always segment.** The AppLink must use `/app/coupon/segment`, not `/app/coupon/detail`.
+- **Two direct navigation CTAs.** "Use Coupon" navigates to the specific won coupon detail (`/app/coupon/detail?id={couponId}`). "My Coupon" navigates to the native app's coupon list (`/app/main?to=coupon_list`). Neither CTA triggers an API call — they navigate directly.
+- **Background claim fires on win receipt, not on CTA tap.** When `play()` returns `outcome: 'win'`, the frontend immediately fires `POST /game/claim` as fire-and-forget (`.catch(() => {})`) before the animation completes. The win screen appears without waiting for the claim response.
+- **couponId comes from the `play()` response.** The `play()` API returns a `coupon` object (`id`, `title`, `discount`, `endDate`) as part of the win result. AppLink URLs are constructed from `coupon.id` in memory.

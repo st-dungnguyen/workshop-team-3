@@ -40,10 +40,11 @@ Full rationale: [f3.1 plan](./f3.1-win-recording-and-coupon-issuance.md#design-d
 
 | File | Role |
 |---|---|
-| `src/app/shared/models/game.ts` | `CouponInfo`, `PlayResult` types |
-| `src/app/shared/services/game.service.ts` | `play()` — `POST /game/play` with `Authorization` header |
-| `src/app/pages/game/containers/GameResult.tsx` | `WinResult` (F3.1 CTA state machine, F3.2 AppLink navigation) + `LoseResult` |
-| `src/assets/i18n/ja/game.json` | `result.win.*`, `result.claimCoupon`, `result.useNow`, `result.claimError` |
+| `src/app/shared/models/game.ts` | `CouponInfo`, `PlayResult` (with `points?: number \| null`), `EligibilityResult` types |
+| `src/app/shared/services/game.service.ts` | `play()`, `claimCoupon()` (fire-and-forget), `getConfig()`, `checkEligibility()` |
+| `src/app/pages/game/hooks/useGameSession.ts` | Calls `play()` then fires `claimCoupon()` on win; returns `coupon`, `points` |
+| `src/app/pages/game/containers/GameResult.tsx` | `WinResult` (AppLink navigation, coupon preview, points badge) + `LoseResult` |
+| `src/assets/i18n/ja/game.json` | `result.win.*`, `result.useCoupon`, `result.myCoupon`, `result.pointsAwarded_*`, `result.close` |
 | `src/assets/i18n/en/game.json` | Same keys in English |
 
 ---
@@ -75,17 +76,24 @@ Coupon display metadata (`title`, `discount`, `endDate`) comes from env vars —
 ## 5. Frontend Flow (WinResult CTA)
 
 ```
-GameResult renders WinResult (outcome === 'win', coupon in props)
-  ctaState: 'idle'
+useGameSession.handlePlayInitiated()
+  → POST /game/play → outcome: 'win', coupon
+  → if coupon.id: gameService.claimCoupon(coupon.id, token).catch(() => {})   ← fire-and-forget claim
+  → setSessionState('revealing')
 
-Player taps "Use Now" or "Claim Coupon"
-  → if ctaState === 'loading': return  (double-tap guard)
-  → setCtaState('loading')
+[animation completes → handleAnimationComplete → sessionState = 'completed']
+
+GameResult renders WinResult (outcome === 'win', coupon in props)
+  No CTA loading state — CTAs navigate immediately
+
+Player taps "Use Coupon"
   → encodedId = encodeURIComponent(coupon.id)
-  → "Use Now":     window.location.href = /app/takeout?coupon_id={encodedId}
-  → "Claim Coupon": window.location.href = /app/coupon/segment?id={encodedId}
-  → native app intercepts URL → opens coupon screen
-  (on unexpected error: setCtaState('error') → shows claimError message)
+  → window.location.href = `${COUPON_BASE_URL}/app/coupon/detail?id=${encodedId}`
+
+Player taps "My Coupon"
+  → window.location.href = `${COUPON_BASE_URL}/app/main?to=coupon_list`
+
+native app intercepts URL → opens coupon detail or coupon list
 ```
 
 ---
@@ -94,12 +102,13 @@ Player taps "Use Now" or "Claim Coupon"
 
 | CTA | URL |
 |---|---|
-| "Claim Coupon" | `https://www.skylark.co.jp/app/coupon/segment?id={encodedId}` |
-| "Use Now" | `https://www.skylark.co.jp/app/takeout?coupon_id={encodedId}` |
+| "Use Coupon" (`result.useCoupon`) | `${VITE_SKYLARK_BASE_URL}/app/coupon/detail?id={encodedId}` |
+| "My Coupon" (`result.myCoupon`) | `${VITE_SKYLARK_BASE_URL}/app/main?to=coupon_list` |
 
-`couponId` is `encodeURIComponent`-encoded (SEC-322). `/app/takeout` requires app v8.0.7+.
+`COUPON_BASE_URL` defaults to `https://www.skylark.co.jp` (from `VITE_SKYLARK_BASE_URL` env var).
+`couponId` is `encodeURIComponent`-encoded before insertion into query param.
 
-**Open question before launch:** Confirm that a segment `couponId` is accepted by `/app/takeout?coupon_id=` — not yet confirmed with native team (spec F3.2 §3 Assumptions).
+> **Note:** The spec (F3.2) documents `/app/coupon/segment?id=` and `/app/coupon` but the implemented URLs are `/app/coupon/detail?id=` and `/app/main?to=coupon_list`. The spec should be updated to match the actual AppLink targets confirmed with the native team.
 
 ---
 
@@ -109,8 +118,12 @@ Player taps "Use Now" or "Claim Coupon"
 |---|---|
 | Frontend never calls Coupon API directly | Only `coupon.service.js` in game-api calls `POST /segment` |
 | Idempotency (no duplicate coupon on retry) | `ALREADY_PLAYED` gate prevents a second play for the same user on the same day |
-| `couponId` held in memory only | Stored in React `useState` in `GameResult`; not written to any storage |
-| AppLink must use `/coupon/segment` not `/coupon/detail` | Hardcoded in `handleCta` |
+| `couponId` held in React state only | `useGameSession` stores `coupon` in `useState`; not written to any storage |
+| Background claim fires before animation | `claimCoupon()` called in `handlePlayInitiated()` on win, before `setSessionState('revealing')` |
+| CTAs navigate directly — no loading state | `handleUseCoupon` / `handleMyCoupon` call `window.location.href` immediately |
+| AppLink for "Use Coupon" | `/app/coupon/detail?id={encodedId}` |
+| AppLink for "My Coupon" | `/app/main?to=coupon_list` |
+| Points badge | `GameResult` receives `points: number \| null`; shows `PointsBadge` when non-null |
 
 ---
 
